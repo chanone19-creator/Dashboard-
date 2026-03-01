@@ -6,9 +6,9 @@
 <title>Dashboard รวมสรุปงาน ปี 2569</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/libs/pptxgen.bundle.js"></script>
+
 <style>
 :root{--bg:#0a0f1e;--bg2:#0f1629;--card:#141b2d;--card2:#1a2340;--border:#1e2d4a;--accent1:#00d4ff;--accent2:#7b4fff;--accent3:#00ff88;--text:#e8f0fe;--text2:#8ea3c3;--done:#00c97a;--inprog:#ff9f43}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -233,23 +233,6 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wm-item-src{font-size:11px;color:var(--text2)}
 .wm-item-month{font-size:10px;color:var(--text2);background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
 
-.export-month-modal{display:none;position:fixed;inset:0;background:rgba(5,9,20,.88);backdrop-filter:blur(8px);z-index:998;align-items:center;justify-content:center}
-.export-month-modal.open{display:flex}
-.emm-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 32px;min-width:400px;max-width:560px}
-.emm-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
-.emm-sub{font-size:12px;color:var(--text2);margin-bottom:4px}
-.exp-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:none;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.exp-pptx{background:linear-gradient(135deg,#c84b11,#e85d04);color:#fff}
-.exp-pptx:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(200,75,17,.4)}
-.exp-pdf{background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff}
-.exp-pdf:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(21,101,192,.4)}
-.exp-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-/* Export loading overlay */
-.export-overlay{display:none;position:fixed;inset:0;background:rgba(5,9,20,.85);backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-.export-overlay.show{display:flex}
-.export-spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent1);border-radius:50%;animation:spin .8s linear infinite}
-.export-msg{color:var(--text);font-size:14px;font-weight:600}
-.export-sub{color:var(--text2);font-size:12px}
 @media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr 1fr}.ccard.span2,.ccard.span3{grid-column:span 2}.type-layout{grid-template-columns:170px 1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}.wm-charts{grid-template-columns:1fr 1fr}.wm-items-grid{grid-template-columns:1fr}}
 @media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.ccard.span2,.ccard.span3{grid-column:span 1}.type-layout{grid-template-columns:1fr}.wm-charts{grid-template-columns:1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -427,25 +410,7 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 
 <!-- Worker Dashboard Modal -->
 
-<!-- Export Month Selector Modal -->
-<div class="export-month-modal" id="exportMonthModal">
-  <div class="emm-box">
-    <div class="emm-title">เลือกช่วงเวลาที่ต้องการส่งออก</div>
-    <div class="emm-sub">ไฟล์ <strong id="exportModalType">PDF</strong> · เลือกเดือน หรือ ทั้งหมด</div>
-    <input type="hidden" id="exportModalTypeVal" value="pdf">
-    <div class="fgrp" id="exportMonthBtns" style="gap:8px;flex-wrap:wrap;margin:16px 0 20px"></div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="fbtn" onclick="closeExportModal()" style="padding:8px 18px">ยกเลิก</button>
-      <button class="exp-btn exp-pdf" onclick="confirmExport()" style="padding:8px 20px">✓ ยืนยัน ส่งออก</button>
-    </div>
-  </div>
-</div>
-<!-- Export overlay -->
-<div class="export-overlay" id="exportOverlay">
-  <div class="export-spinner"></div>
-  <div class="export-msg" id="exportMsg">กำลังสร้างไฟล์...</div>
-  <div class="export-sub" id="exportSub">กรุณารอสักครู่</div>
-</div>
+
 
 <div class="wmodal-overlay" id="workerModal" onclick="if(event.target===this)closeModal()">
   <div class="wmodal">
@@ -593,7 +558,7 @@ const WORKER_PHOTOS={
 };
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
-let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all',curExportMF='all';
+let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all';
 
 /* ── CSV helpers ── */
 function parseCSV(text){
@@ -798,12 +763,12 @@ function buildTypeChart(data){
     d.onclick=()=>{document.getElementById('sInput').value=name;filterTable();document.getElementById('tBody').closest('.tsec').scrollIntoView({behavior:'smooth'});};
     legEl.appendChild(d);
   });
-  /* Build month filter buttons for type — rebuild every render so new months appear */
+  /* Build month filter buttons for type — rebuild every render */
   const tmfg=document.getElementById('typeMfGrp');
   if(tmfg){
     tmfg.innerHTML='';
+    /* ใช้ DATA global เพื่อให้ปุ่มเดือนครบเสมอ ไม่ถูกกรองโดย filter ปัจจุบัน */
     const allMonths=Object.keys(stats(DATA).bM);
-    /* ถ้าเดือนที่เลือกไว้ไม่มีในข้อมูลใหม่ ให้ reset เป็น all */
     if(curTypeMF!=='all'&&!allMonths.includes(curTypeMF))curTypeMF='all';
     const ab=document.createElement('button');ab.className='fbtn'+(curTypeMF==='all'?' active':'');ab.textContent='ทั้งหมด';
     ab.onclick=function(){curTypeMF='all';tmfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));this.classList.add('active');buildTypeChart(DATA);};
@@ -852,12 +817,12 @@ function buildSrcChart(data){
               y:{grid:{display:false},ticks:{color:'#e8f0fe',font:{family:'Sarabun',size:11},autoSkip:false}}}},
     plugins:[srcPctPlugin]
   });
-  /* Build month filter buttons for src — rebuild every render so new months appear */
+  /* Build month filter buttons for src — rebuild every render */
   const smfg=document.getElementById('srcMfGrp');
   if(smfg){
     smfg.innerHTML='';
+    /* ใช้ DATA global เพื่อให้ปุ่มเดือนครบเสมอ ไม่ถูกกรองโดย filter ปัจจุบัน */
     const allMonths=Object.keys(stats(DATA).bM);
-    /* ถ้าเดือนที่เลือกไว้ไม่มีในข้อมูลใหม่ ให้ reset เป็น all */
     if(curSrcMF!=='all'&&!allMonths.includes(curSrcMF))curSrcMF='all';
     const ab=document.createElement('button');ab.className='fbtn'+(curSrcMF==='all'?' active':'');ab.textContent='ทั้งหมด';
     ab.onclick=function(){curSrcMF='all';smfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));this.classList.add('active');buildSrcChart(DATA);};
@@ -1396,256 +1361,6 @@ function showRefreshError(html){
   el.style.display='block';
 }
 
-
-/* ═══════════════════════════════════════════════════════
-   EXPORT FUNCTIONS — PowerPoint & PDF
-   ═══════════════════════════════════════════════════════ */
-
-function showExportOverlay(msg,sub){
-  document.getElementById('exportOverlay').classList.add('show');
-  document.getElementById('exportMsg').textContent=msg||'กำลังสร้างไฟล์...';
-  document.getElementById('exportSub').textContent=sub||'กรุณารอสักครู่';
-}
-function hideExportOverlay(){document.getElementById('exportOverlay').classList.remove('show');}
-function getDateStr(){const d=new Date();return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()+543}`;}
-function fmtPct(n,total){return total?((n/total)*100).toFixed(1)+'%':'0%';}
-
-/* ── Export Month Selector ── */
-function openExportModal(type){
-  const st=stats(DATA);const months=Object.keys(st.bM);
-  const modal=document.getElementById('exportMonthModal');
-  const btns=document.getElementById('exportMonthBtns');
-  document.getElementById('exportModalType').textContent=type==='pdf'?'PDF':'PowerPoint';
-  document.getElementById('exportModalTypeVal').value=type;
-  btns.innerHTML='';curExportMF='all';
-  const ab=document.createElement('button');ab.className='fbtn active';ab.textContent='ทั้งหมด';
-  ab.onclick=function(){curExportMF='all';btns.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));this.classList.add('active');};
-  btns.appendChild(ab);
-  months.forEach(m=>{
-    const btn=document.createElement('button');btn.className='fbtn';btn.textContent=m;
-    btn.onclick=function(){curExportMF=m;btns.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));this.classList.add('active');};
-    btns.appendChild(btn);
-  });
-  modal.classList.add('open');
-}
-function closeExportModal(){document.getElementById('exportMonthModal').classList.remove('open');}
-function confirmExport(){
-  const type=document.getElementById('exportModalTypeVal').value;
-  closeExportModal();
-  setTimeout(()=>{type==='pdf'?exportPDF():exportPPTX();},120);
-}
-
-/* ══════════════════════════════════════════
-   PPTX EXPORT (PptxGenJS CDN)
-   ══════════════════════════════════════════ */
-async function exportPPTX(){
-  if(typeof PptxGenJS==='undefined'){
-    alert('ไม่พบ PptxGenJS\n\nตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วโหลดหน้าใหม่');
-    return;
-  }
-  const filterLabel=curExportMF==='all'?'ทุกเดือน':curExportMF;
-  showExportOverlay('กำลังสร้าง PowerPoint...','เดือน: '+filterLabel);
-  document.getElementById('pptxBtn').disabled=true;
-  await new Promise(r=>setTimeout(r,80));
-  try{
-    const allData=curExportMF==='all'?DATA:DATA.filter(r=>r.m===curExportMF);
-    const st=stats(allData);const months=Object.keys(st.bM);const dateStr=getDateStr();
-    const pres=new PptxGenJS();
-    pres.layout='LAYOUT_16x9';
-    pres.title='สรุปผลการปฏิบัติงาน ปี พ.ศ. 2569';
-    const BG='0D1B2A',BG2='1B2B3B',ACCENT='00D4FF',ACCENT2='7B4FFF',
-          DONE='00C97A',PROG='FF9F43',WHITE='FFFFFF',GRAY='8EA3C3';
-    const CLIST=['00D4FF','7B4FFF','00FF88','FF6B35','FFD700','FF4466','00E5CC','A855F7','FB923C','34D399'];
-    const makeShadow=()=>({type:'outer',blur:4,offset:2,color:'000000',opacity:0.18});
-    const flabel=filterLabel;
-
-    function addHdr(s,title,acc){
-      s.background={color:BG};
-      s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:5.625,fill:{color:BG},line:{color:BG}});
-      s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.62,fill:{color:BG2},line:{color:BG2}});
-      s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:acc},line:{color:acc}});
-      s.addText(title,{x:0.22,y:0.1,w:8,h:0.42,fontSize:17,bold:true,color:WHITE,fontFace:'Sarabun'});
-      s.addText(`ข้อมูล ณ วันที่ ${dateStr} | เดือน: ${flabel}`,{x:7.5,y:0.13,w:2.4,h:0.34,fontSize:8,color:GRAY,align:'right',fontFace:'Sarabun'});
-    }
-    function kpiCard(s,x,y,w2,h2,label,val,sub,color){
-      s.addShape(pres.shapes.RECTANGLE,{x,y,w:w2,h:h2,fill:{color:BG2},line:{color:'1E3A5F'},shadow:makeShadow()});
-      s.addShape(pres.shapes.RECTANGLE,{x,y,w:w2,h:0.06,fill:{color},line:{color}});
-      s.addText(String(val),{x,y:y+0.12,w:w2,h:0.55,fontSize:28,bold:true,color,align:'center',fontFace:'Sarabun'});
-      s.addText(label,{x,y:y+0.67,w:w2,h:0.28,fontSize:10,color:WHITE,align:'center',fontFace:'Sarabun'});
-      s.addText(sub,{x,y:y+0.93,w:w2,h:0.24,fontSize:9,color:GRAY,align:'center',fontFace:'Sarabun'});
-    }
-    function barChart(s,pairs,x,y,w,h){
-      s.addChart(pres.charts.BAR,[{
-        name:'งาน',labels:pairs.map(p=>String(p[0]).slice(0,22)),values:pairs.map(p=>Number(p[1]))
-      }],{
-        x,y,w,h,barDir:'bar',
-        chartColors:CLIST,showValue:true,dataLabelFontSize:10,dataLabelColor:WHITE,
-        showLegend:false,catAxisLabelColor:GRAY,catAxisLabelFontSize:9,
-        valGridLine:{color:'1E3A5F',size:0.5},catGridLine:{style:'none'},
-        chartArea:{fill:{color:BG2}}
-      });
-    }
-
-    /* Cover */
-    {const s=pres.addSlide();
-     s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:5.625,fill:{color:BG},line:{color:BG}});
-     s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:4.1,h:5.625,fill:{color:BG2},line:{color:BG2}});
-     s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.08,h:5.625,fill:{color:ACCENT},line:{color:ACCENT}});
-     s.addText('สรุปผลการปฏิบัติงาน',{x:0.28,y:0.9,w:3.7,h:0.8,fontSize:22,bold:true,color:WHITE,fontFace:'Sarabun'});
-     s.addText('ปี พ.ศ. 2569',{x:0.28,y:1.72,w:3.7,h:0.5,fontSize:17,bold:true,color:ACCENT,fontFace:'Sarabun'});
-     if(curExportMF!=='all')s.addText('เดือน: '+curExportMF,{x:0.28,y:2.24,w:3.7,h:0.4,fontSize:12,bold:true,color:PROG,fontFace:'Sarabun'});
-     s.addText('ข้อมูล ณ วันที่ '+dateStr,{x:0.28,y:2.7,w:3.7,h:0.35,fontSize:9,color:GRAY,fontFace:'Sarabun'});
-     s.addText(months.join(' – '),{x:0.28,y:3.1,w:3.7,h:0.4,fontSize:9,color:GRAY,fontFace:'Sarabun'});
-     const kpis=[['งานทั้งหมด',st.total,'รายการ',ACCENT],['เสร็จแล้ว',st.done,fmtPct(st.done,st.total),DONE],
-                 ['กำลังดำเนิน',st.inprog,fmtPct(st.inprog,st.total),PROG],['ผู้ปฏิบัติงาน',st.topW.length,'คน',ACCENT2]];
-     kpis.forEach(([l,v,sub,col],i)=>kpiCard(s,4.42+(i%2)*2.65,0.75+Math.floor(i/2)*2.25,2.35,1.95,l,v,sub,col));
-     s.addText('สำนักงาน กสทช.',{x:0,y:5.29,w:10,h:0.33,fontSize:8,color:GRAY,align:'center',fontFace:'Sarabun'});}
-
-    /* Status */
-    {const s=pres.addSlide();addHdr(s,'ภาพรวมสถานะงาน',ACCENT);
-     s.addChart(pres.charts.PIE,[{name:'สถานะ',labels:['เสร็จแล้ว','กำลังดำเนิน'],values:[st.done,st.inprog]}],{
-       x:0.3,y:0.72,w:4.3,h:4.5,chartColors:[DONE,PROG],showPercent:true,
-       dataLabelFontSize:13,dataLabelColor:WHITE,dataLabelFontBold:true,
-       showLegend:true,legendPos:'b',legendFontSize:10,legendColor:GRAY,chartArea:{fill:{color:BG2}}
-     });
-     s.addText('งานรายเดือน',{x:5.0,y:0.72,w:4.8,h:0.38,fontSize:12,bold:true,color:WHITE,fontFace:'Sarabun'});
-     const mMax=Math.max(...Object.values(st.bM),1);
-     Object.entries(st.bM).forEach(([m,cnt],i)=>{
-       const done_m=allData.filter(r=>r.m===m&&r.s==='ดำเนินการแล้วเสร็จ').length;
-       const y2=1.15+i*0.55;
-       s.addText(m,{x:5.0,y:y2,w:1.15,h:0.43,fontSize:10,color:GRAY,fontFace:'Sarabun',valign:'middle'});
-       s.addShape(pres.shapes.RECTANGLE,{x:6.2,y:y2+0.07,w:2.95,h:0.28,fill:{color:'1E3A5F'},line:{color:'1E3A5F'}});
-       s.addShape(pres.shapes.RECTANGLE,{x:6.2,y:y2+0.07,w:Math.max(0.05,2.95*cnt/mMax),h:0.28,fill:{color:DONE},line:{color:DONE}});
-       s.addText(`${cnt} (${done_m}✓)`,{x:9.2,y:y2,w:0.75,h:0.43,fontSize:8.5,color:WHITE,fontFace:'Sarabun',valign:'middle'});
-     });}
-
-    /* Type */
-    {const s=pres.addSlide();addHdr(s,'ประเภทงาน',ACCENT2);
-     barChart(s,st.topT,0.15,0.72,9.7,4.6);}
-
-    /* Workers */
-    {const s=pres.addSlide();addHdr(s,'ภาระงานผู้ปฏิบัติงาน',DONE);
-     barChart(s,st.topW,0.15,0.72,5.55,4.6);
-     const totalW=st.topW.reduce((a,b)=>a+b[1],0)||1;
-     const tblRows=[[
-       {text:'ชื่อ',options:{bold:true,color:WHITE,fill:{color:'1E3A5F'},fontSize:9.5,fontFace:'Sarabun'}},
-       {text:'งาน',options:{bold:true,color:WHITE,fill:{color:'1E3A5F'},fontSize:9.5,fontFace:'Sarabun',align:'center'}},
-       {text:'%',options:{bold:true,color:WHITE,fill:{color:'1E3A5F'},fontSize:9.5,fontFace:'Sarabun',align:'center'}},
-       {text:'เสร็จ',options:{bold:true,color:WHITE,fill:{color:'1E3A5F'},fontSize:9.5,fontFace:'Sarabun',align:'center'}}
-     ]];
-     st.topW.slice(0,9).forEach(([name,cnt],i)=>{
-       const wRows=allData.filter(r=>{const wa=r.wa||(r.w?r.w.split(',').map(x=>x.trim()):[]);return wa.some(w=>w===name);});
-       const done2=wRows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
-       const rf=i%2===0?'0D1B2A':'131F30';
-       tblRows.push([
-         {text:name,options:{color:WHITE,fill:{color:rf},fontSize:9,fontFace:'Sarabun'}},
-         {text:String(cnt),options:{color:CLIST[i%10],fill:{color:rf},fontSize:9,align:'center',bold:true,fontFace:'Sarabun'}},
-         {text:fmtPct(cnt,totalW),options:{color:GRAY,fill:{color:rf},fontSize:8.5,align:'center',fontFace:'Sarabun'}},
-         {text:`${done2}/${cnt}`,options:{color:DONE,fill:{color:rf},fontSize:8.5,align:'center',fontFace:'Sarabun'}}
-       ]);
-     });
-     s.addTable(tblRows,{x:5.9,y:0.75,w:3.9,h:4.55,colW:[1.8,0.68,0.68,0.74],border:{pt:0.5,color:'1E3A5F'},fontFace:'Sarabun'});}
-
-    /* Per worker */
-    for(let wi=0;wi<st.topW.length;wi++){
-      const [name,cnt]=st.topW[wi];const wc=CLIST[wi%10];
-      const s=pres.addSlide();addHdr(s,`รายบุคคล: ${name}`,wc);
-      const wRows=allData.filter(r=>{const wa=r.wa||(r.w?r.w.split(',').map(x=>x.trim()):[]);return wa.some(w=>w===name);});
-      const done2=wRows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
-      const prog2=cnt-done2;const totalW=st.topW.reduce((a,b)=>a+b[1],0)||1;
-      const wkpis=[['งานทั้งหมด',cnt,'รายการ',wc],['เสร็จแล้ว',done2,fmtPct(done2,cnt),DONE],
-                   ['กำลังดำเนิน',prog2,fmtPct(prog2,cnt),PROG],['%ภาระงาน',fmtPct(cnt,totalW),'ของทีม',ACCENT2]];
-      wkpis.forEach(([l,v,sub,c2],i2)=>kpiCard(s,0.18+i2*2.44,0.74,2.22,1.12,l,v,sub,c2));
-      const tMap={};wRows.forEach(r=>{if(r.t)tMap[r.t]=(tMap[r.t]||0)+1;});
-      const topT=Object.entries(tMap).sort((a,b)=>b[1]-a[1]);
-      if(topT.length)barChart(s,topT,0.15,2.0,5.85,3.2);
-      s.addText('รายการงานล่าสุด',{x:6.2,y:2.0,w:3.65,h:0.35,fontSize:10.5,bold:true,color:WHITE,fontFace:'Sarabun'});
-      [...wRows].reverse().slice(0,6).forEach((r,i2)=>{
-        const y2=2.44+i2*0.52;const dotC=r.s==='ดำเนินการแล้วเสร็จ'?DONE:PROG;
-        s.addShape(pres.shapes.RECTANGLE,{x:6.2,y:y2+0.05,w:0.11,h:0.11,fill:{color:dotC},line:{color:dotC}});
-        s.addText(r.sub.length>36?r.sub.slice(0,36)+'…':r.sub,{x:6.36,y:y2,w:3.48,h:0.3,fontSize:9,color:WHITE,fontFace:'Sarabun'});
-        s.addText(`${r.m} · ${r.t||''}`,{x:6.36,y:y2+0.28,w:3.48,h:0.22,fontSize:7.5,color:GRAY,fontFace:'Sarabun'});
-      });
-    }
-
-    /* Source */
-    {const s=pres.addSlide();addHdr(s,'แหล่งที่มาของงาน',PROG);
-     barChart(s,st.allS.slice(0,8).map(([s2,v])=>[s2.slice(0,20),v]),0.15,0.72,9.7,4.6);}
-
-    const fname=`สรุปผลการปฏิบัติงาน_${filterLabel}_${dateStr}.pptx`;
-    await pres.writeFile({fileName:fname});
-    hideExportOverlay();
-  }catch(e){
-    hideExportOverlay();
-    console.error('PPTX error:',e);
-    alert('PPTX Error: '+e.message+'\n\nหากปัญหายังคงอยู่ ให้ใช้ report_generator.py แทน');
-  }
-  document.getElementById('pptxBtn').disabled=false;
-}
-
-/* ══════════════════════════════════════════
-   PDF EXPORT — html2canvas screenshot (Thai-safe)
-   ══════════════════════════════════════════ */
-async function exportPDF(){
-  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){
-    alert('ไม่พบไลบรารี html2canvas/jsPDF\nตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วโหลดหน้าใหม่');return;
-  }
-  const filterLabel=curExportMF==='all'?'ทุกเดือน':curExportMF;
-  showExportOverlay('กำลังสร้าง PDF...','กำลัง capture หน้าจอ (รองรับภาษาไทยสมบูรณ์)');
-  document.getElementById('pdfBtn').disabled=true;
-  await new Promise(r=>setTimeout(r,150));
-
-  // Temporarily filter if month selected
-  const origData=DATA.slice();
-  if(curExportMF!=='all'){
-    DATA.length=0;
-    origData.filter(r=>r.m===curExportMF).forEach(r=>DATA.push(r));
-    render(DATA);
-    await new Promise(r=>setTimeout(r,800));
-  }
-
-  try{
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-    const PW=297,PH=210;
-
-    async function captureSection(selector,pageW,pageH,isFirst){
-      const el=document.querySelector(selector);
-      if(!el)return;
-      const cvs=await html2canvas(el,{backgroundColor:'#0a0f1e',scale:1.8,useCORS:true,logging:false,allowTaint:true});
-      const imgData=cvs.toDataURL('image/jpeg',0.88);
-      const ratio=Math.min(pageW/cvs.width,pageH/cvs.height);
-      const dw=cvs.width*ratio,dh=cvs.height*ratio;
-      const ox=(pageW-dw)/2,oy=(pageH-dh)/2;
-      if(!isFirst)doc.addPage('a4','landscape');
-      doc.addImage(imgData,'JPEG',ox,oy,dw,dh);
-    }
-
-    showExportOverlay('กำลังสร้าง PDF...','หน้า 1: KPI Overview');
-    await captureSection('.kpi-row',PW,PH,true);
-
-    showExportOverlay('กำลังสร้าง PDF...','หน้า 2: Charts');
-    await captureSection('.cgrid',PW,PH,false);
-
-    showExportOverlay('กำลังสร้าง PDF...','หน้า 3: รายการงาน');
-    await captureSection('.tsec',PW,PH,false);
-
-    const dateStr=getDateStr();
-    const fname=`สรุปผลการปฏิบัติงาน_${filterLabel}_${dateStr}.pdf`;
-    doc.save(fname);
-    hideExportOverlay();
-  }catch(e){
-    hideExportOverlay();
-    console.error('PDF error:',e);
-    alert('PDF Error: '+e.message);
-  }
-
-  // Restore original data
-  if(curExportMF!=='all'){
-    DATA.length=0; origData.forEach(r=>DATA.push(r)); render(DATA);
-  }
-  document.getElementById('pdfBtn').disabled=false;
-}
 
 /* ── Toggle expand panels ── */
 function toggleExpand(panelId, btnId){
