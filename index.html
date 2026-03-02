@@ -1335,7 +1335,7 @@ async function tryRefresh(){
     console.log('[Dashboard] Total rows:',mapped.length,'| Workers:',Object.keys(wStats).length);
 
     render(mapped);
-    document.getElementById('lupd').textContent='อัพเดทล่าสุด: '+new Date().toLocaleTimeString('th-TH')+' ('+mapped.length+' รายการ)';
+    updateLupdNow(mapped.length+' รายการ');
     document.getElementById('footer').textContent='Dashboard รวมสรุปงาน ปี 2569 · Live · '+new Date().toLocaleTimeString('th-TH');
   }catch(e){
     console.error('[Dashboard] Refresh error:',e);
@@ -1376,31 +1376,54 @@ function toggleExpand(panelId, btnId){
   }
 }
 
+/* ── Helper: วันที่ภาษาไทย ── */
+function thaiDateNow(){
+  const d=new Date();
+  const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const day=d.getDate();
+  const mon=months[d.getMonth()];
+  const year=d.getFullYear()+543;
+  const hh=String(d.getHours()).padStart(2,'0');
+  const mm=String(d.getMinutes()).padStart(2,'0');
+  return `${day} ${mon} ${year} เวลา ${hh}:${mm} น.`;
+}
+
+function updateLupdNow(extra){
+  const el=document.getElementById('lupd');
+  if(el) el.textContent='ข้อมูล ณ วันที่ '+thaiDateNow()+(extra?' · '+extra:'');
+}
+
 /* ── Init ── */
 const saved=localStorage.getItem('gasUrl');
 if(saved){gasUrl=saved;document.getElementById('gasUrl').value=saved;}
 render(EMBEDDED);
-document.getElementById('lupd').textContent='ข้อมูล ณ วันที่ 23 ก.พ. 2569';
+updateLupdNow(); // แสดงวันที่ปัจจุบันทันที
 
 /* ── Auto-update วันละ 1 ครั้ง เวลา 06:00 น. ── */
 function scheduleAutoUpdate(){
-  if(!gasUrl)return; // ไม่มี GAS URL ไม่ต้องตั้งเวลา
+  if(!gasUrl)return;
   const now=new Date();
   const next6=new Date(now);
   next6.setHours(6,0,0,0);
-  if(now>=next6)next6.setDate(next6.getDate()+1); // ถ้าผ่าน 6 โมงแล้ว → วันถัดไป
+  if(now>=next6)next6.setDate(next6.getDate()+1);
   const msUntil=next6-now;
   const h=Math.floor(msUntil/3600000),m=Math.floor((msUntil%3600000)/60000);
-  console.log(`[Auto-update] จะดึงข้อมูลใหม่ใน ${h} ชม. ${m} นาที (${next6.toLocaleString('th-TH')})`);
   const nuEl=document.getElementById('nextUpd');
   if(nuEl){nuEl.style.display='block';nuEl.textContent=`⏰ อัพเดทอัตโนมัติ 06:00 น. (อีก ${h} ชม. ${m} นาที)`;}
   setTimeout(async()=>{
     console.log('[Auto-update] กำลังดึงข้อมูล 06:00 น...');
     await tryRefresh();
-    scheduleAutoUpdate(); // ตั้งรอบถัดไป
+    scheduleAutoUpdate();
   },msUntil);
 }
-scheduleAutoUpdate(); // เริ่มตั้ง schedule ทันทีที่โหลดหน้า
+
+/* ── ถ้ามี GAS URL ให้ refresh อัตโนมัติทันทีที่เปิด ── */
+(async()=>{
+  if(gasUrl){
+    await tryRefresh();   // ดึงข้อมูลล่าสุดจาก GAS ทันที
+    scheduleAutoUpdate(); // แล้วค่อยตั้ง schedule 06:00 น.
+  }
+})();
 </script>
 </body>
 </html>
