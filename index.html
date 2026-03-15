@@ -1278,10 +1278,10 @@ function openWorkerModal(name,colorIdx,st){
   buildWmFilters();
   renderWmItems();
 
-  /* Show modal first — then create charts so canvas has real dimensions */
+  /* Show modal first — double rAF ensures browser finishes layout before chart canvas is measured */
   document.getElementById('workerModal').classList.add('open');
   document.body.style.overflow='hidden';
-  requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
     Object.values(wmCharts).forEach(c=>{try{c.destroy()}catch(e){}});wmCharts={};
     wmCharts.donut=new Chart(document.getElementById('wmDonut'),{type:'pie',
       data:{labels:tArr.map(t=>t[0]),datasets:[{data:tArr.map(t=>t[1]),backgroundColor:COLORS,borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
@@ -1321,7 +1321,7 @@ function openWorkerModal(name,colorIdx,st){
                 y:{stacked:true,grid:{color:'rgba(30,45,74,.4)'},ticks:{color:'#8ea3c3',font:{family:'Sarabun',size:10},stepSize:1}}}},
       plugins:[wmInlinePlugin]
     });
-  });
+  }));
 }
 
 /* ── Worker modal filter state ── */
