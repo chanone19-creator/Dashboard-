@@ -210,8 +210,8 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wm-kpi-sub{font-size:11px;color:var(--text2);margin-top:4px}
 
 /* Worker Charts Row */
-.wm-charts{display:grid;grid-template-columns:220px 1fr 1fr;gap:16px;margin-bottom:24px;align-items:start}
-.wm-chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.wm-charts{display:grid;grid-template-columns:220px minmax(0,1fr) minmax(0,1fr);gap:16px;margin-bottom:24px;align-items:start}
+.wm-chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;min-width:0;overflow:hidden}
 .wm-ctitle{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.7px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .wm-ctitle::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent1);border-radius:2px}
 
@@ -222,7 +222,7 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wm-type-list{display:flex;flex-direction:column;gap:7px}
 .wm-type-row{display:flex;align-items:center;gap:7px}
 .wm-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.wm-type-name{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wm-type-name{font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wm-type-bar-wrap{width:70px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;flex-shrink:0}
 .wm-type-bar{height:100%;border-radius:3px}
 .wm-type-pct{font-size:11px;font-weight:700;width:34px;text-align:right;flex-shrink:0}
