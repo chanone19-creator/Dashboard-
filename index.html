@@ -1321,6 +1321,7 @@ function openWorkerModal(name,colorIdx,st){
   renderWmItems();
   document.getElementById('workerModal').classList.add('open');
   document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>{Object.values(wmCharts).forEach(c=>{try{c.resize()}catch(e){}});});
 }
 
 /* ── Worker modal filter state ── */
