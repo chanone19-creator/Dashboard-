@@ -251,7 +251,7 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wm-item-month{font-size:10px;color:var(--text2);background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
 
 @media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr 1fr}.ccard.span2,.ccard.span3{grid-column:span 2}.type-layout{grid-template-columns:170px 1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}.wm-charts{grid-template-columns:1fr 1fr}.wm-items-grid{grid-template-columns:1fr}}
-@media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.ccard.span2,.ccard.span3{grid-column:span 1}.type-layout{grid-template-columns:1fr}.wm-charts{grid-template-columns:1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.ccard.span2,.ccard.span3{grid-column:span 1}.type-layout{grid-template-columns:1fr}.wm-charts{grid-template-columns:1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}.wmodal-overlay{padding:0}.wmodal{border-radius:0;min-height:100vh}.wm-body{padding:14px 12px}.wm-head-inner{padding:14px 12px}.wm-kpis{grid-template-columns:1fr 1fr}.wm-items-grid{grid-template-columns:1fr}.thead2{padding:12px 14px}.sbox input{width:120px}}
 
 /* ===== PRINT MODE ===== */
 @media print{
@@ -480,7 +480,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <div class="sbox">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ea3c3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="sInput" placeholder="ค้นหาเรื่อง / ต้นทาง..." oninput="filterTable()">
+            <input type="text" id="sInput" placeholder="ค้นหาเรื่อง / ต้นทาง..." oninput="filterTable()" aria-label="ค้นหารายการงาน">
           </div>
           <div class="fgrp" id="sfGrp">
             <button class="fbtn active" onclick="setSF('all',this)">ทั้งหมด</button>
@@ -513,7 +513,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 
 
 
-<div class="wmodal-overlay" id="workerModal" onclick="if(event.target===this)closeModal()">
+<div class="wmodal-overlay" id="workerModal" role="dialog" aria-modal="true" aria-labelledby="wmName" onclick="if(event.target===this)closeModal()">
   <div class="wmodal">
     <div class="wm-head" id="wmHead">
       <!-- accent color bar injected by JS -->
@@ -526,7 +526,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
             <div class="wm-sub" id="wmSub">—</div>
           </div>
         </div>
-        <button class="wm-close" onclick="closeModal()">✕</button>
+        <button class="wm-close" id="wmCloseBtn" onclick="closeModal()" aria-label="ปิด">✕</button>
       </div>
     </div>
     <div class="wm-body">
@@ -660,6 +660,10 @@ const WORKER_PHOTOS={
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
 let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all';
+const STATUS_DONE='ดำเนินการแล้วเสร็จ';
+const PAGE_SIZE=50;
+let curPage=1,filteredRows=[];
+function escapeHTML(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 /* ── CSV helpers ── */
 function parseCSV(text){
@@ -739,7 +743,7 @@ function debugCSV(text){
 
 /* ── Stats ── */
 function stats(data){
-  const total=data.length,done=data.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+  const total=data.length,done=data.filter(r=>r.s===STATUS_DONE).length;
   const bM={},bT={},bW={},bS={};
   data.forEach(r=>{
     bM[r.m]=(bM[r.m]||0)+1;
@@ -857,7 +861,7 @@ function buildTypeChart(data){
     const pct=(cnt/total*100).toFixed(1);
     const d=document.createElement('div');d.className='tleg-row';d.title=`${name}: ${cnt} งาน (${pct}%)`;
     d.innerHTML=`<div class="tleg-dot" style="background:${COLORS[i%10]}"></div>
-      <div class="tleg-name">${name}</div>
+      <div class="tleg-name">${escapeHTML(name)}</div>
       <div class="tleg-bar-wrap"><div class="tleg-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${COLORS[i%10]}"></div></div>
       <div class="tleg-pct" style="color:${COLORS[i%10]}">${pct}%</div>
       <div class="tleg-cnt">${cnt}</div>`;
@@ -941,12 +945,12 @@ function buildSrcChart(data){
       const srcRows=filtered.filter(r=>r.src===src);
       const tMap={};srcRows.forEach(r=>{if(r.t)tMap[r.t]=(tMap[r.t]||0)+1;});
       const topTypes=Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
-      const tags=topTypes.map(([t,n],i)=>`<span style="padding:2px 7px;border-radius:10px;font-size:10px;background:${COLORS[i%10]}22;color:${COLORS[i%10]};border:1px solid ${COLORS[i%10]}33">${t} · ${n}</span>`).join(' ');
+      const tags=topTypes.map(([t,n],i)=>`<span style="padding:2px 7px;border-radius:10px;font-size:10px;background:${COLORS[i%10]}22;color:${COLORS[i%10]};border:1px solid ${COLORS[i%10]}33">${escapeHTML(t)} · ${n}</span>`).join(' ');
       const pct=(stotal/total*100).toFixed(1);
       const w=(stotal/(top5[0]?.[1]||1)*100).toFixed(0);
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:600;color:var(--text);flex:1">${src}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);flex:1">${escapeHTML(src)}</span>
           <span style="font-size:12px;font-weight:700;color:var(--accent1)">${stotal}</span>
           <span style="font-size:11px;color:var(--text2)">${pct}%</span>
         </div>
@@ -979,11 +983,11 @@ function _renderContinued(data,st){
     d.innerHTML=`<div style="display:flex;align-items:center;gap:7px;width:145px;flex-shrink:0">
         ${wphoto
           ?`<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${COLORS[i]};box-shadow:0 0 8px ${COLORS[i]}55">
-              <img src="${wphoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${name}">
+              <img src="${wphoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escapeHTML(name)}">
             </div>`
-          :`<div style="width:34px;height:34px;border-radius:50%;background:${COLORS[i]}22;border:2px solid ${COLORS[i]};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:${COLORS[i]}">${name.charAt(0)}</div>`
+          :`<div style="width:34px;height:34px;border-radius:50%;background:${COLORS[i]}22;border:2px solid ${COLORS[i]};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:${COLORS[i]}">${escapeHTML(name.charAt(0))}</div>`
         }
-        <div class="wname" style="color:${COLORS[i]};width:auto;flex:1" title="${name}">${name}</div>
+        <div class="wname" style="color:${COLORS[i]};width:auto;flex:1" title="${escapeHTML(name)}">${escapeHTML(name)}</div>
       </div>
       <div class="wbwrap" style="position:relative">
         <div class="wbar" style="width:${bpct}%;background:linear-gradient(90deg,${COLORS[i]},${COLORS[(i+2)%10]});position:relative;min-width:2px">
@@ -991,7 +995,7 @@ function _renderContinued(data,st){
         </div>
         ${Number(bpct)<40?`<span style="position:absolute;left:calc(${bpct}% + 6px);top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:${COLORS[i]};white-space:nowrap">${cnt} · ${wpct}%</span>`:''}
       </div>`;
-    d.onclick=()=>openWorkerModal(name,i,st);
+    d.onclick=()=>{openWorkerModalFocusSave();openWorkerModal(name,i,st);};
     wl.appendChild(d);
   });
   /* Worker expand detail: top types per worker */
@@ -1002,18 +1006,18 @@ function _renderContinued(data,st){
       const wRows=data.filter(r=>{const wa=r.wa||(r.w?r.w.split(',').map(x=>x.trim()):[]);return wa.some(w=>w===name);});
       const tMap={};wRows.forEach(r=>{if(r.t)tMap[r.t]=(tMap[r.t]||0)+1;});
       const top=Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
-      const done_w=wRows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+      const done_w=wRows.filter(r=>r.s===STATUS_DONE).length;
       const col=COLORS[i%10];
       const photo=WORKER_PHOTOS[name];
       const photoHtml=photo
-        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${photo}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${name}"></div>`
-        :`<div style="width:44px;height:44px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:${col}">${name.charAt(0)}</div>`;
-      const tags=top.map(([t,n])=>`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${col}18;border:1px solid ${col}33;font-size:9.5px;color:${col};margin:2px">${t}&nbsp;<b>${n}</b></span>`).join('');
+        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${photo}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escapeHTML(name)}"></div>`
+        :`<div style="width:44px;height:44px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:${col}">${escapeHTML(name.charAt(0))}</div>`;
+      const tags=top.map(([t,n])=>`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${col}18;border:1px solid ${col}33;font-size:9.5px;color:${col};margin:2px">${escapeHTML(t)}&nbsp;<b>${n}</b></span>`).join('');
       wdEl.innerHTML+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
         ${photoHtml}
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
-            <span style="font-size:12px;font-weight:700;color:${col}">${name}</span>
+            <span style="font-size:12px;font-weight:700;color:${col}">${escapeHTML(name)}</span>
             <span style="font-size:10px;color:var(--text2)">${cnt} งาน</span>
             <span style="font-size:10px;font-weight:600;color:${done_w===cnt?'var(--done)':'var(--inprog)'}">${done_w===cnt?'✅':'⏳'} ${done_w}/${cnt}</span>
             <span style="font-size:10px;color:var(--text2)">${(cnt/totalW2*100).toFixed(1)}%</span>
@@ -1034,14 +1038,14 @@ function _renderContinued(data,st){
     plugins:[pctPlugin]
   });
   const sl=document.getElementById('statLegend');sl.innerHTML='';
-  [{l:'ดำเนินการแล้วเสร็จ',n:st.done,c:'#00c97a'},{l:'ระหว่างดำเนินการ',n:st.inprog,c:'#ff9f43'}].forEach(item=>{
+  [{l:STATUS_DONE,n:st.done,c:'#00c97a'},{l:'ระหว่างดำเนินการ',n:st.inprog,c:'#ff9f43'}].forEach(item=>{
     const pct=st.total?(item.n/st.total*100).toFixed(1):0;
     sl.innerHTML+=`<div class="stat-leg-row"><div class="stat-leg-dot" style="background:${item.c}"></div><div class="stat-leg-name">${item.l}</div><div class="stat-leg-pct" style="color:${item.c}">${pct}%</div><div class="stat-leg-cnt">(${item.n})</div></div>`;
   });
   /* Stat expand detail: breakdown by type per status */
   const sdEl=document.getElementById('statDetail');if(sdEl){
-    const doneRows=data.filter(r=>r.s==='ดำเนินการแล้วเสร็จ');
-    const progRows=data.filter(r=>r.s!=='ดำเนินการแล้วเสร็จ');
+    const doneRows=data.filter(r=>r.s===STATUS_DONE);
+    const progRows=data.filter(r=>r.s!==STATUS_DONE);
     function typeBreakdown(rows){
       const m={};rows.forEach(r=>{if(r.t)m[r.t]=(m[r.t]||0)+1;});
       return Object.entries(m).sort((a,b)=>b[1]-a[1]);
@@ -1050,7 +1054,7 @@ function _renderContinued(data,st){
       const tb=typeBreakdown(rows);const total=rows.length||1;
       const items=tb.slice(0,5).map(([t,n])=>`
         <div class="stat-detail-row">
-          <span class="stat-detail-type" title="${t}">${t}</span>
+          <span class="stat-detail-type" title="${escapeHTML(t)}">${escapeHTML(t)}</span>
           <span class="stat-detail-n" style="color:${color}">${n}</span>
         </div>
         <div class="stat-pbar-wrap"><div class="stat-pbar-fill" style="width:${(n/total*100).toFixed(0)}%;background:${color}88"></div></div>
@@ -1100,7 +1104,7 @@ function _renderContinued(data,st){
 function buildMonthChart(data,months,st){
   if(charts.month){try{charts.month.destroy()}catch(e){}}
   const dM={},pM={};
-  data.forEach(r=>{if(r.s==='ดำเนินการแล้วเสร็จ')dM[r.m]=(dM[r.m]||0)+1;else pM[r.m]=(pM[r.m]||0)+1;});
+  data.forEach(r=>{if(r.s===STATUS_DONE)dM[r.m]=(dM[r.m]||0)+1;else pM[r.m]=(pM[r.m]||0)+1;});
 
   let ds0,ds1,yLabel,max_val;
   if(monthMode==='count'){
@@ -1171,20 +1175,52 @@ function setMonthMode(mode,btn){
 /* ── Filter Table ── */
 function filterTable(){
   const sq=document.getElementById('sInput').value.toLowerCase();
-  const tb=document.getElementById('tBody');tb.innerHTML='';let vis=0;
+  filteredRows=[];
   DATA.forEach(row=>{
-    if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return;
-    if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return;
+    if(curSF==='done'&&row.s!==STATUS_DONE)return;
+    if(curSF==='inprog'&&row.s===STATUS_DONE)return;
     const rowYear=row.y||'2569';
     if(curYF!=='all'&&rowYear!==curYF)return;
     if(curMF!=='all'&&row.m!==curMF)return;
     if(sq&&!row.sub.toLowerCase().includes(sq)&&!row.src.toLowerCase().includes(sq)&&!row.w.toLowerCase().includes(sq)&&!row.t.toLowerCase().includes(sq))return;
-    vis++;
-    const badge=row.s==='ดำเนินการแล้วเสร็จ'?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
-    const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗</a>`:'—';
-    tb.innerHTML+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${row.m}</td><td>${badge}</td><td><span class="ttag">${row.t||'—'}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.src}">${row.src}</td><td class="tsubj" title="${row.sub}">${row.sub}</td><td style="font-size:12px;color:var(--text2)">${row.w||'—'}</td><td>${ref}</td></tr>`;
+    filteredRows.push(row);
   });
-  document.getElementById('rcnt').textContent=vis;
+  curPage=1;
+  renderTablePage();
+}
+function renderTablePage(){
+  const total=filteredRows.length;
+  const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(curPage>totalPages)curPage=1;
+  const start=(curPage-1)*PAGE_SIZE;
+  const tb=document.getElementById('tBody');tb.innerHTML='';
+  filteredRows.slice(start,start+PAGE_SIZE).forEach((row,i)=>{
+    const num=start+i+1;
+    const isDone=row.s===STATUS_DONE;
+    const badge=isDone?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
+    const ref=(row.r&&row.r.startsWith('http'))?`<a href="${escapeHTML(row.r)}" target="_blank" rel="noopener noreferrer" class="rlink">🔗</a>`:'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:var(--text2);font-size:12px">${num}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${escapeHTML(row.m)}</td><td>${badge}</td><td><span class="ttag">${escapeHTML(row.t||'—')}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(row.src)}">${escapeHTML(row.src)}</td><td class="tsubj" title="${escapeHTML(row.sub)}">${escapeHTML(row.sub)}</td><td style="font-size:12px;color:var(--text2)">${escapeHTML(row.w||'—')}</td><td>${ref}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('rcnt').textContent=total;
+  renderPagination(total,totalPages);
+}
+function renderPagination(total,totalPages){
+  let pg=document.getElementById('pgBar');
+  if(!pg){pg=document.createElement('div');pg.id='pgBar';pg.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 16px;flex-wrap:wrap;border-top:1px solid var(--border)';document.querySelector('.tsec').appendChild(pg);}
+  if(totalPages<=1){pg.innerHTML='';return;}
+  const mk=(lbl,page,disabled,active)=>{const b=document.createElement('button');b.className='fbtn'+(active?' active':'');b.textContent=lbl;b.disabled=disabled;if(disabled)b.style.opacity='0.4';if(!disabled)b.onclick=()=>{curPage=page;renderTablePage();document.querySelector('.tsec').scrollIntoView({behavior:'smooth'});};return b;};
+  pg.innerHTML='';
+  pg.appendChild(mk('‹',curPage-1,curPage===1,false));
+  const r=[];for(let i=Math.max(1,curPage-2);i<=Math.min(totalPages,curPage+2);i++)r.push(i);
+  if(r[0]>1){pg.appendChild(mk('1',1,false,false));if(r[0]>2){const e=document.createElement('span');e.textContent='…';e.style.color='var(--text2)';pg.appendChild(e);}}
+  r.forEach(p=>pg.appendChild(mk(String(p),p,false,p===curPage)));
+  if(r[r.length-1]<totalPages){if(r[r.length-1]<totalPages-1){const e=document.createElement('span');e.textContent='…';e.style.color='var(--text2)';pg.appendChild(e);}pg.appendChild(mk(String(totalPages),totalPages,false,false));}
+  pg.appendChild(mk('›',curPage+1,curPage===totalPages,false));
+  const info=document.createElement('span');info.style.cssText='font-size:11px;color:var(--text2);margin-left:6px';
+  const s=(curPage-1)*PAGE_SIZE+1,e2=Math.min(curPage*PAGE_SIZE,total);
+  info.textContent=`${s}–${e2} จาก ${total} รายการ`;pg.appendChild(info);
 }
 function setSF(f,btn){curSF=f;saveFilterState();document.querySelectorAll('#sfGrp .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterTable();}
 
@@ -1196,7 +1232,7 @@ function openWorkerModal(name,colorIdx,st){
     return wArr.some(w=>w===name);
   });
   wmRows=rows;wmFilter_='all';wmFS={status:'all',year:'all',month:'all',type:'all'};
-  const done=rows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+  const done=rows.filter(r=>r.s===STATUS_DONE).length;
   const prog=rows.length-done;
   const totalW=st?st.topW.reduce((a,b)=>a+b[1],0):rows.length;
   const wmPct=totalW?(rows.length/totalW*100).toFixed(1):0;
@@ -1211,7 +1247,7 @@ function openWorkerModal(name,colorIdx,st){
 
   /* ── Circle avatar: pre-cropped square → perfect circle ── */
   if(wmPhoto){
-    wmAvatarEl.innerHTML=`<img src="${wmPhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block" alt="${name}">`;
+    wmAvatarEl.innerHTML=`<img src="${wmPhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block" alt="${escapeHTML(name)}">`;
     wmAvatarEl.style.background='none';
     wmAvatarEl.style.color=COLORS[ci%10];
     wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%10]},0 6px 24px #0008`;
@@ -1254,7 +1290,7 @@ function openWorkerModal(name,colorIdx,st){
     const pct=(cnt/rows.length*100).toFixed(1);
     tl.innerHTML+=`<div class="wm-type-row">
       <div class="wm-type-dot" style="background:${COLORS[i%10]}"></div>
-      <div class="wm-type-name" title="${n}">${n}</div>
+      <div class="wm-type-name" title="${escapeHTML(n)}">${escapeHTML(n)}</div>
       <div class="wm-type-bar-wrap"><div class="wm-type-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${COLORS[i%10]}"></div></div>
       <div class="wm-type-pct" style="color:${COLORS[i%10]}">${pct}%</div>
       <div class="wm-type-cnt">${cnt}</div>
@@ -1264,7 +1300,7 @@ function openWorkerModal(name,colorIdx,st){
   /* Month mini chart */
   const wMonths=[...new Set(DATA.map(r=>r.m))];
   const wDM={},wPM={};
-  rows.forEach(r=>{if(r.s==='ดำเนินการแล้วเสร็จ')wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
+  rows.forEach(r=>{if(r.s===STATUS_DONE)wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
   const wmMonthTotal=rows.length||1;
   const wmInlinePlugin={id:'wmi',afterDraw(chart){
     const{ctx}=chart;
@@ -1306,6 +1342,7 @@ function openWorkerModal(name,colorIdx,st){
   renderWmItems();
   document.getElementById('workerModal').classList.add('open');
   document.body.style.overflow='hidden';
+  setTimeout(()=>{const btn=document.getElementById('wmCloseBtn');if(btn)btn.focus();},50);
 }
 
 /* ── Worker modal filter state ── */
@@ -1362,8 +1399,8 @@ function buildWmFilters(){
 function renderWmItems(){
   const sq=(document.getElementById('wmSearch')?.value||'').trim().toLowerCase();
   const filtered=wmRows.filter(r=>{
-    if(wmFS.status==='done'&&r.s!=='ดำเนินการแล้วเสร็จ')return false;
-    if(wmFS.status==='inprog'&&r.s==='ดำเนินการแล้วเสร็จ')return false;
+    if(wmFS.status==='done'&&r.s!==STATUS_DONE)return false;
+    if(wmFS.status==='inprog'&&r.s===STATUS_DONE)return false;
     if(wmFS.year!=='all'&&(r.y||'2569')!==wmFS.year)return false;
     if(wmFS.month!=='all'&&r.m!==wmFS.month)return false;
     if(wmFS.type!=='all'&&r.t!==wmFS.type)return false;
@@ -1376,34 +1413,38 @@ function renderWmItems(){
   if(ttl)ttl.textContent=`รายการงาน (${filtered.length}/${wmRows.length})`;
 
   filtered.forEach((row,i)=>{
-    const isDone=row.s==='ดำเนินการแล้วเสร็จ';
+    const isDone=row.s===STATUS_DONE;
     const badge=isDone
       ?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`
       :`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
-    const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗 ดูข้อมูล</a>`:'';
-    el.innerHTML+=`<div class="wm-item" style="border-left:3px solid ${isDone?'var(--done)':'var(--inprog)'}">
-      <div class="wm-item-head">
+    const ref=(row.r&&row.r.startsWith('http'))?`<a href="${escapeHTML(row.r)}" target="_blank" rel="noopener noreferrer" class="rlink">🔗 ดูข้อมูล</a>`:'';
+    const item=document.createElement('div');
+    item.className='wm-item';item.style.borderLeft=`3px solid ${isDone?'var(--done)':'var(--inprog)'}`;
+    item.innerHTML=`<div class="wm-item-head">
         <span class="wm-item-num">${i+1}.</span>
         ${badge}
-        <span class="ttag">${row.t||'—'}</span>
+        <span class="ttag">${escapeHTML(row.t||'—')}</span>
         ${ref}
       </div>
-      <div class="wm-item-sub">${row.sub}</div>
+      <div class="wm-item-sub">${escapeHTML(row.sub)}</div>
       <div class="wm-item-meta">
-        <span class="wm-item-src">📌 ${row.src}</span>
-        <span class="wm-item-month">${row.m} ${row.y||'2569'}</span>
-      </div>
-    </div>`;
+        <span class="wm-item-src">📌 ${escapeHTML(row.src)}</span>
+        <span class="wm-item-month">${escapeHTML(row.m)} ${escapeHTML(row.y||'2569')}</span>
+      </div>`;
+    el.appendChild(item);
   });
   if(!filtered.length)el.innerHTML=`<div style="color:var(--text2);text-align:center;padding:32px;grid-column:span 2;font-size:14px">
     <div style="font-size:28px;margin-bottom:8px">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>`;
 }
 
+let _prevFocus=null;
+function openWorkerModalFocusSave(){_prevFocus=document.activeElement;}
 function closeModal(){
   document.getElementById('workerModal').classList.remove('open');
   document.body.style.overflow='';
+  if(_prevFocus)try{_prevFocus.focus();}catch(e){}
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('workerModal').classList.contains('open'))closeModal();});
 
 /* ── GAS ── */
 function saveGasUrl(){
