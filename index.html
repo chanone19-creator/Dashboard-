@@ -251,7 +251,9 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wm-item-month{font-size:10px;color:var(--text2);background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
 
 @media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr 1fr}.ccard.span2,.ccard.span3{grid-column:span 2}.type-layout{grid-template-columns:170px 1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}.wm-charts{grid-template-columns:1fr 1fr}.wm-items-grid{grid-template-columns:1fr}}
-@media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.ccard.span2,.ccard.span3{grid-column:span 1}.type-layout{grid-template-columns:1fr}.wm-charts{grid-template-columns:1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.cgrid{grid-template-columns:1fr}.ccard.span2,.ccard.span3{grid-column:span 1}.type-layout{grid-template-columns:1fr}.wm-charts{grid-template-columns:1fr}.wm-kpis{grid-template-columns:repeat(2,1fr)}.header-right{width:100%;flex-direction:column;align-items:flex-start}.toolbar-btns{flex-wrap:wrap}}
+@media(max-width:480px){.kpi-row{grid-template-columns:1fr}.wrap{padding:16px 12px}.kval{font-size:34px}.kcard{padding:16px 14px}.thead2{flex-direction:column;align-items:stretch}.sbox input{width:120px}.sbox{flex:1}.wm-kpis{grid-template-columns:1fr 1fr}.wm-items-grid{grid-template-columns:1fr}.header-left h1{font-size:22px}.tool-btn span{display:none}.tool-btn{padding:8px 10px}}
+@media(max-width:360px){.kpi-row{grid-template-columns:1fr}.fgrp{gap:4px}.fbtn{padding:5px 10px;font-size:11px}}
 
 /* ===== PRINT MODE ===== */
 @media print{
@@ -338,9 +340,13 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
           <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           <span id="themeLbl">Light</span>
         </button>
+        <button class="tool-btn" onclick="exportCSV()" title="ส่งออก CSV">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>CSV</span>
+        </button>
         <button class="tool-btn" onclick="printDashboard()" title="พิมพ์ Dashboard">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          พิมพ์
+          <span>พิมพ์</span>
         </button>
       </div>
       <div>
@@ -647,7 +653,16 @@ const EMBEDDED=[
 {"m":"กุมภาพันธ์","s":"ดำเนินการแล้วเสร็จ","src":"ภภ.1","t":"งานแผน","sub":"DTV * 5","w":"แถลงการณ์, เสนีย์","wa":["แถลงการณ์","เสนีย์"],"r":""},
 {"m":"กุมภาพันธ์","s":"ดำเนินการแล้วเสร็จ","src":"โรงเรียนนายร้อยตำรวจ","t":"สนับสนุนหน่วยงาน","sub":"แต่งตั้งอนุกรรมการออกข้อสอบ รับสมัครนักเรียนเตรียมทหาร ประจำปีการศึกษา 2569","w":"ชานนท์, ยุทธการ, อนันต์","wa":["ชานนท์","ยุทธการ","อนันต์"],"r":""},
 {"m":"กุมภาพันธ์","s":"ดำเนินการแล้วเสร็จ","src":"AWN","t":"การตรวจสอบแก้ไขการรบกวน","sub":"ขอความอนุเคราะห์มีหนังสือถึงผู้ครอบครองอุปกรณ์ที่ก่อให้เกิดการรบกวน 2600 MHz","w":"ชานนท์","wa":["ชานนท์"],"r":""},
-{"m":"กุมภาพันธ์","s":"ดำเนินการแล้วเสร็จ","src":"คท.","t":"สนับสนุนหน่วยงาน","sub":"กรรมการคุมสอบ โครงการอบรมและสอบพนักงานวิทยุสมัครเล่นขั้นต้น ประจำปี 2569","w":"ชานนท์, แถลงการณ์","wa":["ชานนท์","แถลงการณ์"],"r":""}
+{"m":"กุมภาพันธ์","s":"ดำเนินการแล้วเสร็จ","src":"คท.","t":"สนับสนุนหน่วยงาน","sub":"กรรมการคุมสอบ โครงการอบรมและสอบพนักงานวิทยุสมัครเล่นขั้นต้น ประจำปี 2569","w":"ชานนท์, แถลงการณ์","wa":["ชานนท์","แถลงการณ์"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"ภภ.1","t":"งานแผน","sub":"ตรวจสอบสถานีวิทยุกระจายเสียงและโทรทัศน์ประจำเดือนมีนาคม 2569","w":"แถลงการณ์, เสนีย์, ยุทธการ","wa":["แถลงการณ์","เสนีย์","ยุทธการ"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"ภภ.1","t":"ชายแดน","sub":"ตรวจสอบชายแดนตามแผนเดือนมีนาคม 2569","w":"ชานนท์, ยุทธการ","wa":["ชานนท์","ยุทธการ"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"TUC","t":"การตรวจสอบแก้ไขการรบกวน","sub":"(SMK9201) ขอความอนุเคราะห์ร่วมตรวจสอบสัญญาณรบกวน 2100 MHz บริเวณสมุทรสาคร","w":"เสนีย์, ยุทธการ, อนันต์","wa":["เสนีย์","ยุทธการ","อนันต์"],"r":""},
+{"m":"มีนาคม","s":"ระหว่างดำเนินการ","src":"AWN","t":"การตรวจสอบแก้ไขการรบกวน","sub":"ขอความอนุเคราะห์ตรวจสอบสัญญาณรบกวน 1800 MHz บริเวณราชบุรี","w":"แถลงการณ์, ยุทธการ","wa":["แถลงการณ์","ยุทธการ"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"กภ.","t":"อุปกรณ์","sub":"ขอให้ตรวจสอบอุปกรณ์ตรวจวัดคลื่นความถี่ประจำสำนักงาน","w":"แถลงการณ์, อนันต์","wa":["แถลงการณ์","อนันต์"],"r":""},
+{"m":"มีนาคม","s":"ระหว่างดำเนินการ","src":"ทส.","t":"พิสูจน์การใช้งานคลื่นความถี่","sub":"ดำเนินการพิสูจน์การใช้งานคลื่นความถี่ตามประกาศ กสทช. รอบที่ 2 ปี 2569","w":"ชานนท์, แถลงการณ์, เสนีย์, ยุทธการ, อนันต์","wa":["ชานนท์","แถลงการณ์","เสนีย์","ยุทธการ","อนันต์"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"คส.","t":"การตรวจสอบแก้ไขการรบกวน","sub":"ตรวจสอบข้อเท็จจริงกรณีร้องเรียนวิทยุชุมชนย่าน FM ราชบุรี","w":"แถลงการณ์, เสนีย์","wa":["แถลงการณ์","เสนีย์"],"r":""},
+{"m":"มีนาคม","s":"ดำเนินการแล้วเสร็จ","src":"ภภ.1","t":"งานแผน","sub":"EMF * 2 oper 3 site มีนาคม 2569","w":"เสนีย์, อนันต์","wa":["เสนีย์","อนันต์"],"r":""},
+{"m":"มีนาคม","s":"ระหว่างดำเนินการ","src":"ปภ. จังหวัดสมุทรสาคร","t":"ประชุม","sub":"ประชุมทบทวนแผนการป้องกันและบรรเทาสาธารณภัยจังหวัดสมุทรสาคร ประจำปี 2569","w":"ชานนท์","wa":["ชานนท์"],"r":""}
 ];
 
 const WORKER_PHOTOS={
@@ -1178,7 +1193,7 @@ function filterTable(){
     const rowYear=row.y||'2569';
     if(curYF!=='all'&&rowYear!==curYF)return;
     if(curMF!=='all'&&row.m!==curMF)return;
-    if(sq&&!row.sub.toLowerCase().includes(sq)&&!row.src.toLowerCase().includes(sq)&&!row.w.toLowerCase().includes(sq)&&!row.t.toLowerCase().includes(sq))return;
+    if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return;
     vis++;
     const badge=row.s==='ดำเนินการแล้วเสร็จ'?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
     const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗</a>`:'—';
@@ -1536,6 +1551,30 @@ function toggleTheme(){
     const icon=document.getElementById('themeIcon');if(icon)icon.innerHTML='<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
   }
 })();
+
+/* ── Export CSV ── */
+function exportCSV(){
+  const sq=document.getElementById('sInput').value.toLowerCase();
+  const rows=DATA.filter(row=>{
+    if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return false;
+    if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return false;
+    const rowYear=row.y||'2569';
+    if(curYF!=='all'&&rowYear!==curYF)return false;
+    if(curMF!=='all'&&row.m!==curMF)return false;
+    if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return false;
+    return true;
+  });
+  const header=['ลำดับ','เดือน','สถานะ','ประเภทงาน','แหล่งที่มา','เรื่อง','ผู้ปฏิบัติงาน','อ้างอิง'];
+  const esc=v=>`"${String(v||'').replace(/"/g,'""')}"`;
+  const csv=[header.map(esc).join(','),...rows.map((r,i)=>[i+1,r.m,r.s,r.t,r.src,r.sub,r.w,r.r].map(esc).join(','))].join('\n');
+  const bom='\uFEFF';
+  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`dashboard-2569-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
+  showNotify('ส่งออก CSV สำเร็จ',`ส่งออกข้อมูล ${rows.length} รายการเรียบร้อยแล้ว`);
+}
 
 /* ── Print ── */
 function printDashboard(){
