@@ -599,6 +599,9 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 </div>
 
 <script>
+/* ── Constants ── */
+const CURRENT_YEAR=String(new Date().getFullYear()+543);
+
 /* ── Data ── */
 const EMBEDDED=[
 {"m":"มกราคม","s":"ดำเนินการแล้วเสร็จ","src":"สำนักงานสาธารณสุขจังหวัดราชบุรี","t":"ประชุม VIP","sub":"ขอเชิญประชุมเตรียมการรับเสด็จทูลกระหม่อมหญิงอุบลรัตนราชกัญญา สิริวัฒนาพรรณวดี เสด็จเปิดศูนย์เพื่อนใน TO BE NUMBER ONE จังหวัดราชบุรี","w":"ชานนท์","wa":["ชานนท์"],"r":"https://www.facebook.com/share/p/1A9Q3wnzYN/"},
@@ -814,7 +817,7 @@ function render(data){
   document.getElementById('kDbar').style.width=dp+'%';
   document.getElementById('kPbar').style.width=pp+'%';
   document.getElementById('hbadge').textContent=`ข้อมูล ${gasUrl?'Live':'Embedded'} · ${st.total} รายการ`;
-  document.getElementById('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. 2569 · ${months.join(' – ')}`;
+  document.getElementById('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. ${CURRENT_YEAR} · ${months.join(' – ')}`;
 
   Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};
 
@@ -1083,7 +1086,7 @@ function _renderContinued(data,st){
   const yfg=document.getElementById('yfGrp');
   if(yfg){
     yfg.innerHTML='';
-    const years=[...new Set(data.map(r=>r.y||'2569'))].sort();
+    const years=[...new Set(data.map(r=>r.y||CURRENT_YEAR))].sort();
     if(years.length>1){
       const allYBtn=document.createElement('button');allYBtn.className='fbtn active';allYBtn.textContent='ทั้งหมด';
       allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');filterTable();};
@@ -1095,7 +1098,7 @@ function _renderContinued(data,st){
       });
     } else {
       /* ถ้ามีปีเดียว แสดงป้ายบอกแต่ไม่ทำ toggle */
-      const lbl=document.createElement('span');lbl.textContent='ปี '+(years[0]||'2569');
+      const lbl=document.createElement('span');lbl.textContent='ปี '+(years[0]||CURRENT_YEAR);
       lbl.style.cssText='font-size:12px;font-weight:600;color:var(--accent1);padding:4px 10px;border-radius:12px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2)';
       yfg.appendChild(lbl);
     }
@@ -1190,7 +1193,7 @@ function filterTable(){
   DATA.forEach(row=>{
     if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return;
     if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return;
-    const rowYear=row.y||'2569';
+    const rowYear=row.y||CURRENT_YEAR;
     if(curYF!=='all'&&rowYear!==curYF)return;
     if(curMF!=='all'&&row.m!==curMF)return;
     if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return;
@@ -1222,22 +1225,22 @@ function openWorkerModal(name,colorIdx,st){
   const wmAccent=document.getElementById('wmHeadAccent');
 
   /* ── Accent color bar on top of header ── */
-  if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%10]},${COLORS[(ci+2)%10]})`;
+  if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%COLORS.length]},${COLORS[(ci+2)%COLORS.length]})`;
 
   /* ── Circle avatar: pre-cropped square → perfect circle ── */
   if(wmPhoto){
     wmAvatarEl.innerHTML=`<img src="${wmPhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block" alt="${name}">`;
     wmAvatarEl.style.background='none';
-    wmAvatarEl.style.color=COLORS[ci%10];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%10]},0 6px 24px #0008`;
+    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
     wmAvatarEl.style.overflow='hidden';
     wmAvatarEl.textContent='';
   } else {
     wmAvatarEl.innerHTML='';
     wmAvatarEl.textContent=AVATARS[ci%AVATARS.length];
-    wmAvatarEl.style.background=COLORS[ci%10]+'22';
-    wmAvatarEl.style.color=COLORS[ci%10];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%10]},0 6px 24px #0008`;
+    wmAvatarEl.style.background=COLORS[ci%COLORS.length]+'22';
+    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
   }
   document.getElementById('wmName').textContent=name;
   document.getElementById('wmSub').textContent=`ผู้ปฏิบัติงาน · ${rows.length} งาน`;
@@ -1254,18 +1257,21 @@ function openWorkerModal(name,colorIdx,st){
   const tArr=Object.entries(tMap).sort((a,b)=>b[1]-a[1]);
 
   /* Type list */
-  const tl=document.getElementById('wmTypeList');tl.innerHTML='';
+  const tl=document.getElementById('wmTypeList');
   const maxT=tArr[0]?.[1]||1;
+  let tlHtml='';
   tArr.forEach(([n,cnt],i)=>{
     const pct=(cnt/rows.length*100).toFixed(1);
-    tl.innerHTML+=`<div class="wm-type-row">
-      <div class="wm-type-dot" style="background:${COLORS[i%10]}"></div>
+    const c=COLORS[i%COLORS.length];
+    tlHtml+=`<div class="wm-type-row">
+      <div class="wm-type-dot" style="background:${c}"></div>
       <div class="wm-type-name" title="${n}">${n}</div>
-      <div class="wm-type-bar-wrap"><div class="wm-type-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${COLORS[i%10]}"></div></div>
-      <div class="wm-type-pct" style="color:${COLORS[i%10]}">${pct}%</div>
+      <div class="wm-type-bar-wrap"><div class="wm-type-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${c}"></div></div>
+      <div class="wm-type-pct" style="color:${c}">${pct}%</div>
       <div class="wm-type-cnt">${cnt}</div>
     </div>`;
   });
+  tl.innerHTML=tlHtml;
 
   /* Month data prep */
   const wMonths=[...new Set(DATA.map(r=>r.m))];
@@ -1283,7 +1289,10 @@ function openWorkerModal(name,colorIdx,st){
   document.body.style.overflow='hidden';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     Object.values(wmCharts).forEach(c=>{try{c.destroy()}catch(e){}});wmCharts={};
-    wmCharts.donut=new Chart(document.getElementById('wmDonut'),{type:'pie',
+    const donutEl=document.getElementById('wmDonut');
+    const monthEl=document.getElementById('wmMonth');
+    if(!donutEl||!monthEl)return;
+    wmCharts.donut=new Chart(donutEl,{type:'pie',
       data:{labels:tArr.map(t=>t[0]),datasets:[{data:tArr.map(t=>t[1]),backgroundColor:COLORS,borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${(ctx.parsed/rows.length*100).toFixed(1)}%)`}}}},
@@ -1308,7 +1317,7 @@ function openWorkerModal(name,colorIdx,st){
         ctx.fillText(`${tot} (${pct}%)`,bar.x,bar.y-3);ctx.restore();
       });
     }};
-    wmCharts.month=new Chart(document.getElementById('wmMonth'),{type:'bar',
+    wmCharts.month=new Chart(monthEl,{type:'bar',
       data:{labels:wMonths,datasets:[
         {label:'เสร็จ',data:wMonths.map(m=>wDM[m]||0),backgroundColor:'rgba(0,201,122,.75)',borderRadius:4,borderSkipped:false},
         {label:'กำลังดำเนิน',data:wMonths.map(m=>wPM[m]||0),backgroundColor:'rgba(255,159,67,.75)',borderRadius:4,borderSkipped:false}]},
@@ -1340,7 +1349,7 @@ function wmFilter(f,btn){wmSetFilter('status',f,btn);}
 
 /* Build dynamic year + month + type filter buttons from wmRows */
 function buildWmFilters(){
-  const years=[...new Set(wmRows.map(r=>r.y||'2569'))].sort();
+  const years=[...new Set(wmRows.map(r=>r.y||CURRENT_YEAR))].sort();
   const months=[...new Set(wmRows.map(r=>r.m))];
   const types=[...new Set(wmRows.map(r=>r.t).filter(Boolean))].sort();
 
@@ -1380,10 +1389,10 @@ function renderWmItems(){
   const filtered=wmRows.filter(r=>{
     if(wmFS.status==='done'&&r.s!=='ดำเนินการแล้วเสร็จ')return false;
     if(wmFS.status==='inprog'&&r.s==='ดำเนินการแล้วเสร็จ')return false;
-    if(wmFS.year!=='all'&&(r.y||'2569')!==wmFS.year)return false;
+    if(wmFS.year!=='all'&&(r.y||CURRENT_YEAR)!==wmFS.year)return false;
     if(wmFS.month!=='all'&&r.m!==wmFS.month)return false;
     if(wmFS.type!=='all'&&r.t!==wmFS.type)return false;
-    if(sq&&![r.sub,r.src,r.t,r.m,r.y||'2569'].some(f=>(f||'').toLowerCase().includes(sq)))return false;
+    if(sq&&![r.sub,r.src,r.t,r.m,r.y||CURRENT_YEAR].some(f=>(f||'').toLowerCase().includes(sq)))return false;
     return true;
   });
   const el=document.getElementById('wmItems');el.innerHTML='';
@@ -1407,7 +1416,7 @@ function renderWmItems(){
       <div class="wm-item-sub">${row.sub}</div>
       <div class="wm-item-meta">
         <span class="wm-item-src">📌 ${row.src}</span>
-        <span class="wm-item-month">${row.m} ${row.y||'2569'}</span>
+        <span class="wm-item-month">${row.m} ${row.y||CURRENT_YEAR}</span>
       </div>
     </div>`;
   });
@@ -1475,7 +1484,7 @@ async function tryRefresh(){
     } else if(oldCount>0 && mapped.length===oldCount){
       showNotify('✅ ข้อมูลล่าสุดแล้ว','ไม่มีรายการใหม่ ('+mapped.length+' รายการ)');
     }
-    document.getElementById('footer').textContent='Dashboard รวมสรุปงาน ปี 2569 · Live · '+new Date().toLocaleTimeString('th-TH');
+    document.getElementById('footer').textContent=`Dashboard รวมสรุปงาน ปี ${CURRENT_YEAR} · Live · `+new Date().toLocaleTimeString('th-TH');
   }catch(e){
     console.error('[Dashboard] Refresh error:',e);
     const msg=e.message||String(e);
@@ -1559,7 +1568,7 @@ function exportCSV(){
   const rows=DATA.filter(row=>{
     if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return false;
     if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return false;
-    const rowYear=row.y||'2569';
+    const rowYear=row.y||CURRENT_YEAR;
     if(curYF!=='all'&&rowYear!==curYF)return false;
     if(curMF!=='all'&&row.m!==curMF)return false;
     if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return false;
@@ -1572,7 +1581,7 @@ function exportCSV(){
   const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
-  a.download=`dashboard-2569-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`dashboard-${CURRENT_YEAR}-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);
   showNotify('ส่งออก CSV สำเร็จ',`ส่งออกข้อมูล ${rows.length} รายการเรียบร้อยแล้ว`);
 }
