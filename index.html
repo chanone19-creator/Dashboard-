@@ -601,6 +601,8 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 <script>
 /* ── Constants ── */
 const CURRENT_YEAR=String(new Date().getFullYear()+543);
+const STATUS_DONE='ดำเนินการแล้วเสร็จ';
+const STATUS_INPROG='ระหว่างดำเนินการ';
 
 /* ── Data ── */
 const EMBEDDED=[
@@ -678,6 +680,7 @@ const WORKER_PHOTOS={
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
 let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all';
+const workerModalEl=document.getElementById('workerModal');
 
 /* ── CSV helpers ── */
 function parseCSV(text){
@@ -757,7 +760,7 @@ function debugCSV(text){
 
 /* ── Stats ── */
 function stats(data){
-  const total=data.length,done=data.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+  const total=data.length,done=data.filter(r=>r.s===STATUS_DONE).length;
   const bM={},bT={},bW={},bS={};
   data.forEach(r=>{
     bM[r.m]=(bM[r.m]||0)+1;
@@ -827,11 +830,13 @@ function render(data){
   _renderContinued(data,st);
 }
 
-/* ── Shared helper: สร้างปุ่ม filter เดือนสำหรับ chart ── */
-function buildChartMonthFilter(grpId,current,onChange){
+/* ── Shared helpers ── */
+function badgeHtml(isDone){return isDone?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;}
+
+/* สร้างปุ่ม filter เดือนสำหรับ chart */
+function buildChartMonthFilter(grpId,current,onChange,allMonths){
   const grp=document.getElementById(grpId);if(!grp)return;
   grp.innerHTML='';
-  const allMonths=Object.keys(stats(DATA).bM);
   function setActive(val){grp.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));}
   const ab=document.createElement('button');ab.className='fbtn'+(current==='all'?' active':'');ab.dataset.val='all';ab.textContent='ทั้งหมด';
   ab.onclick=function(){onChange('all');setActive('all');};grp.appendChild(ab);
@@ -896,13 +901,14 @@ function buildTypeChart(data){
     d.onclick=()=>{document.getElementById('sInput').value=name;filterTable();document.getElementById('tBody').closest('.tsec').scrollIntoView({behavior:'smooth'});};
     legEl.appendChild(d);
   });
-  /* Build month filter buttons for type */
-  buildChartMonthFilter('typeMfGrp',curTypeMF,val=>{curTypeMF=val;buildTypeChart(DATA);});
+  /* Build month filter buttons for type — pass pre-computed months (no extra stats call) */
+  buildChartMonthFilter('typeMfGrp',curTypeMF,val=>{curTypeMF=val;buildTypeChart(DATA);},Object.keys(st.bM));
 }
 
 /* ── Source chart (filterable) ── */
 function buildSrcChart(data){
   if(charts.src){try{charts.src.destroy()}catch(e){}}
+  const st=stats(data);
   const filtered=curSrcMF==='all'?data:data.filter(r=>r.m===curSrcMF);
   const sf=stats(filtered);
   const allSrc=sf.allS;
@@ -937,7 +943,7 @@ function buildSrcChart(data){
     plugins:[srcPctPlugin]
   });
   /* Build month filter buttons for src */
-  buildChartMonthFilter('srcMfGrp',curSrcMF,val=>{curSrcMF=val;buildSrcChart(DATA);});
+  buildChartMonthFilter('srcMfGrp',curSrcMF,val=>{curSrcMF=val;buildSrcChart(DATA);},Object.keys(st.bM));
   /* Src expand detail */
   const srcDEl=document.getElementById('srcDetail');if(srcDEl){
     const top5=allSrc.slice(0,5);
@@ -1006,7 +1012,7 @@ function _renderContinued(data,st){
       const wRows=data.filter(r=>{const wa=r.wa||(r.w?r.w.split(',').map(x=>x.trim()):[]);return wa.some(w=>w===name);});
       const tMap={};wRows.forEach(r=>{if(r.t)tMap[r.t]=(tMap[r.t]||0)+1;});
       const top=Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
-      const done_w=wRows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+      const done_w=wRows.filter(r=>r.s===STATUS_DONE).length;
       const col=COLORS[i%COLORS.length];
       const photo=WORKER_PHOTOS[name];
       const photoHtml=photo
@@ -1041,7 +1047,7 @@ function _renderContinued(data,st){
   const sl=document.getElementById('statLegend');
   if(sl){
     let slHtml='';
-    [{l:'ดำเนินการแล้วเสร็จ',n:st.done,c:'#00c97a'},{l:'ระหว่างดำเนินการ',n:st.inprog,c:'#ff9f43'}].forEach(item=>{
+    [{l:STATUS_DONE,n:st.done,c:'#00c97a'},{l:STATUS_INPROG,n:st.inprog,c:'#ff9f43'}].forEach(item=>{
       const pct=st.total?(item.n/st.total*100).toFixed(1):0;
       slHtml+=`<div class="stat-leg-row"><div class="stat-leg-dot" style="background:${item.c}"></div><div class="stat-leg-name">${item.l}</div><div class="stat-leg-pct" style="color:${item.c}">${pct}%</div><div class="stat-leg-cnt">(${item.n})</div></div>`;
     });
@@ -1049,8 +1055,8 @@ function _renderContinued(data,st){
   }
   /* Stat expand detail: breakdown by type per status */
   const sdEl=document.getElementById('statDetail');if(sdEl){
-    const doneRows=data.filter(r=>r.s==='ดำเนินการแล้วเสร็จ');
-    const progRows=data.filter(r=>r.s!=='ดำเนินการแล้วเสร็จ');
+    const doneRows=data.filter(r=>r.s===STATUS_DONE);
+    const progRows=data.filter(r=>r.s!==STATUS_DONE);
     function typeBreakdown(rows){
       const m={};rows.forEach(r=>{if(r.t)m[r.t]=(m[r.t]||0)+1;});
       return Object.entries(m).sort((a,b)=>b[1]-a[1]);
@@ -1109,7 +1115,7 @@ function _renderContinued(data,st){
 function buildMonthChart(data,months,st){
   if(charts.month){try{charts.month.destroy()}catch(e){}}
   const dM={},pM={};
-  data.forEach(r=>{if(r.s==='ดำเนินการแล้วเสร็จ')dM[r.m]=(dM[r.m]||0)+1;else pM[r.m]=(pM[r.m]||0)+1;});
+  data.forEach(r=>{if(r.s===STATUS_DONE)dM[r.m]=(dM[r.m]||0)+1;else pM[r.m]=(pM[r.m]||0)+1;});
 
   let ds0,ds1,yLabel,max_val;
   if(monthMode==='count'){
@@ -1180,16 +1186,16 @@ function setMonthMode(mode,btn){
 /* ── Filter Table ── */
 function filterTable(){
   const sq=document.getElementById('sInput').value.toLowerCase();
-  const tb=document.getElementById('tBody');let vis=0;let tbHtml='';
+  const tb=document.getElementById('tBody');if(!tb)return;let vis=0;let tbHtml='';
   DATA.forEach(row=>{
-    if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return;
-    if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return;
+    if(curSF==='done'&&row.s!==STATUS_DONE)return;
+    if(curSF==='inprog'&&row.s!==STATUS_INPROG)return;
     const rowYear=row.y||CURRENT_YEAR;
     if(curYF!=='all'&&rowYear!==curYF)return;
     if(curMF!=='all'&&row.m!==curMF)return;
     if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return;
     vis++;
-    const badge=row.s==='ดำเนินการแล้วเสร็จ'?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
+    const badge=badgeHtml(row.s===STATUS_DONE);
     const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗</a>`:'—';
     tbHtml+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${row.m}</td><td>${badge}</td><td><span class="ttag">${row.t||'—'}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.src}">${row.src}</td><td class="tsubj" title="${row.sub}">${row.sub}</td><td style="font-size:12px;color:var(--text2)">${row.w||'—'}</td><td>${ref}</td></tr>`;
   });
@@ -1206,7 +1212,7 @@ function openWorkerModal(name,colorIdx,st){
     return wArr.some(w=>w===name);
   });
   wmRows=rows;wmFilter_='all';wmFS={status:'all',year:'all',month:'all',type:'all'};
-  const done=rows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
+  const done=rows.filter(r=>r.s===STATUS_DONE).length;
   const prog=rows.length-done;
   const totalW=st?st.topW.reduce((a,b)=>a+b[1],0):rows.length;
   const wmPct=totalW?(rows.length/totalW*100).toFixed(1):0;
@@ -1268,7 +1274,7 @@ function openWorkerModal(name,colorIdx,st){
   /* Month data prep */
   const wMonths=[...new Set(DATA.map(r=>r.m))];
   const wDM={},wPM={};
-  rows.forEach(r=>{if(r.s==='ดำเนินการแล้วเสร็จ')wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
+  rows.forEach(r=>{if(r.s===STATUS_DONE)wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
   const wmMonthTotal=rows.length||1;
 
   /* reset search box */
@@ -1277,7 +1283,7 @@ function openWorkerModal(name,colorIdx,st){
   renderWmItems();
 
   /* Show modal first — double rAF ensures browser finishes layout before chart canvas is measured */
-  document.getElementById('workerModal').classList.add('open');
+  workerModalEl.classList.add('open');
   document.body.style.overflow='hidden';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     Object.values(wmCharts).forEach(c=>{try{c.destroy()}catch(e){}});wmCharts={};
@@ -1379,8 +1385,8 @@ function buildWmFilters(){
 function renderWmItems(){
   const sq=(document.getElementById('wmSearch')?.value||'').trim().toLowerCase();
   const filtered=wmRows.filter(r=>{
-    if(wmFS.status==='done'&&r.s!=='ดำเนินการแล้วเสร็จ')return false;
-    if(wmFS.status==='inprog'&&r.s==='ดำเนินการแล้วเสร็จ')return false;
+    if(wmFS.status==='done'&&r.s!==STATUS_DONE)return false;
+    if(wmFS.status==='inprog'&&r.s===STATUS_DONE)return false;
     if(wmFS.year!=='all'&&(r.y||CURRENT_YEAR)!==wmFS.year)return false;
     if(wmFS.month!=='all'&&r.m!==wmFS.month)return false;
     if(wmFS.type!=='all'&&r.t!==wmFS.type)return false;
@@ -1391,38 +1397,23 @@ function renderWmItems(){
   const ttl=document.getElementById('wmItemsTitle');
   if(ttl)ttl.textContent=`รายการงาน (${filtered.length}/${wmRows.length})`;
 
-  if(!filtered.length){
-    el.innerHTML=`<div style="color:var(--text2);text-align:center;padding:32px;grid-column:span 2;font-size:14px"><div style="font-size:28px;margin-bottom:8px">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>`;
-  } else {
-    let elHtml='';
-    filtered.forEach((row,i)=>{
-      const isDone=row.s==='ดำเนินการแล้วเสร็จ';
-      const badge=isDone
-        ?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`
-        :`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
-      const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗 ดูข้อมูล</a>`:'';
-      elHtml+=`<div class="wm-item" style="border-left:3px solid ${isDone?'var(--done)':'var(--inprog)'}">
-        <div class="wm-item-head">
-          <span class="wm-item-num">${i+1}.</span>
-          ${badge}
-          <span class="ttag">${row.t||'—'}</span>
-          ${ref}
-        </div>
-        <div class="wm-item-sub">${row.sub}</div>
-        <div class="wm-item-meta">
-          <span class="wm-item-src">📌 ${row.src}</span>
-          <span class="wm-item-month">${row.m} ${row.y||CURRENT_YEAR}</span>
-        </div>
-      </div>`;
-    });
-    el.innerHTML=elHtml;
-  }
+  el.innerHTML=filtered.length
+    ? filtered.map((row,i)=>{
+        const isDone=row.s===STATUS_DONE;
+        const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗 ดูข้อมูล</a>`:'';
+        return `<div class="wm-item" style="border-left:3px solid ${isDone?'var(--done)':'var(--inprog)'}">
+          <div class="wm-item-head"><span class="wm-item-num">${i+1}.</span>${badgeHtml(isDone)}<span class="ttag">${row.t||'—'}</span>${ref}</div>
+          <div class="wm-item-sub">${row.sub}</div>
+          <div class="wm-item-meta"><span class="wm-item-src">📌 ${row.src}</span><span class="wm-item-month">${row.m} ${row.y||CURRENT_YEAR}</span></div>
+        </div>`;
+      }).join('')
+    : `<div style="color:var(--text2);text-align:center;padding:32px;grid-column:span 2;font-size:14px"><div style="font-size:28px;margin-bottom:8px">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>`;
 }
 
 function closeModal(){
   Object.values(wmCharts).forEach(c=>{try{c.destroy()}catch(e){}});
   wmCharts={};
-  document.getElementById('workerModal').classList.remove('open');
+  workerModalEl.classList.remove('open');
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -1450,7 +1441,7 @@ async function fetchWithRetry(url, retries=3, baseDelay=1000){
 
 async function tryRefresh(){
   /* ไม่รีเฟรชขณะ worker modal เปิดอยู่ ป้องกัน render() ทับ chart */
-  if(document.getElementById('workerModal').classList.contains('open'))return;
+  if(workerModalEl.classList.contains('open'))return;
   const btn=document.getElementById('rbtn');btn.classList.add('spin');
   if(!gasUrl){document.getElementById('corsNotice').classList.add('show');btn.classList.remove('spin');return;}
   const oldCount=DATA.length;
@@ -1565,8 +1556,8 @@ function toggleTheme(){
 function exportCSV(){
   const sq=document.getElementById('sInput').value.toLowerCase();
   const rows=DATA.filter(row=>{
-    if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return false;
-    if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return false;
+    if(curSF==='done'&&row.s!==STATUS_DONE)return false;
+    if(curSF==='inprog'&&row.s!==STATUS_INPROG)return false;
     const rowYear=row.y||CURRENT_YEAR;
     if(curYF!=='all'&&rowYear!==curYF)return false;
     if(curMF!=='all'&&row.m!==curMF)return false;
