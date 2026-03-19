@@ -340,10 +340,6 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
           <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           <span id="themeLbl">Light</span>
         </button>
-        <button class="tool-btn" onclick="exportCSV()" title="ส่งออก CSV" aria-label="ส่งออกข้อมูล CSV">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>CSV</span>
-        </button>
         <button class="tool-btn" onclick="printDashboard()" title="พิมพ์ Dashboard" aria-label="พิมพ์ Dashboard">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           <span>พิมพ์</span>
@@ -1561,30 +1557,6 @@ function toggleTheme(){
     const icon=document.getElementById('themeIcon');if(icon)icon.innerHTML='<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
   }
 })();
-
-/* ── Export CSV ── */
-function exportCSV(){
-  const sq=document.getElementById('sInput').value.toLowerCase();
-  const rows=DATA.filter(row=>{
-    if(curSF==='done'&&row.s!==STATUS_DONE)return false;
-    if(curSF==='inprog'&&row.s!==STATUS_INPROG)return false;
-    const rowYear=row.y||CURRENT_YEAR;
-    if(curYF!=='all'&&rowYear!==curYF)return false;
-    if(curMF!=='all'&&row.m!==curMF)return false;
-    if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return false;
-    return true;
-  });
-  const header=['ลำดับ','เดือน','สถานะ','ประเภทงาน','แหล่งที่มา','เรื่อง','ผู้ปฏิบัติงาน','อ้างอิง'];
-  const esc=v=>`"${String(v||'').replace(/"/g,'""')}"`;
-  const csv=[header.map(esc).join(','),...rows.map((r,i)=>[i+1,r.m,r.s,r.t,r.src,r.sub,r.w,r.r].map(esc).join(','))].join('\n');
-  const bom='\uFEFF';
-  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  a.download=`dashboard-${CURRENT_YEAR}-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();URL.revokeObjectURL(url);
-  showNotify('ส่งออก CSV สำเร็จ',`ส่งออกข้อมูล ${rows.length} รายการเรียบร้อยแล้ว`);
-}
 
 /* ── Print ── */
 function printDashboard(){
