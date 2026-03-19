@@ -803,11 +803,20 @@ const tip={backgroundColor:'#0f1629',borderColor:'#1e2d4a',borderWidth:1,titleCo
 
 /* ── Main Render ── */
 function render(data){
+  if(!data||!data.length){
+    const tb=document.getElementById('tBody');if(tb)tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text2)">ไม่มีข้อมูล</td></tr>';
+    document.getElementById('rcnt').textContent=0;
+    return;
+  }
   DATA=data;
   const st=stats(data);
   const dp=st.total?(st.done/st.total*100).toFixed(1):0;
   const pp=st.total?(st.inprog/st.total*100).toFixed(1):0;
   const months=Object.keys(st.bM);
+  /* รีเซ็ต filter state ที่ไม่ valid กับชุดข้อมูลใหม่ */
+  if(curMF!=='all'&&!months.includes(curMF))curMF='all';
+  if(curTypeMF!=='all'&&!months.includes(curTypeMF))curTypeMF='all';
+  if(curSrcMF!=='all'&&!months.includes(curSrcMF))curSrcMF='all';
 
   document.getElementById('kT').textContent=st.total;
   document.getElementById('kD').textContent=st.done;
@@ -831,6 +840,7 @@ function render(data){
 }
 
 /* ── Shared helpers ── */
+function escHtml(s){const e={'"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;','&':'&amp;'};return String(s==null?'':s).replace(/[&<>"']/g,c=>e[c]);}
 function badgeHtml(isDone){return isDone?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;}
 
 /* สร้างปุ่ม filter เดือนสำหรับ chart */
@@ -892,9 +902,9 @@ function buildTypeChart(data){
   const maxT=sf.topT[0]?.[1]||1;
   sf.topT.forEach(([name,cnt],i)=>{
     const pct=(cnt/total*100).toFixed(1);
-    const d=document.createElement('div');d.className='tleg-row';d.title=`${name}: ${cnt} งาน (${pct}%)`;
+    const d=document.createElement('div');d.className='tleg-row';d.title=`${escHtml(name)}: ${cnt} งาน (${pct}%)`;
     d.innerHTML=`<div class="tleg-dot" style="background:${COLORS[i%10]}"></div>
-      <div class="tleg-name">${name}</div>
+      <div class="tleg-name">${escHtml(name)}</div>
       <div class="tleg-bar-wrap"><div class="tleg-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${COLORS[i%10]}"></div></div>
       <div class="tleg-pct" style="color:${COLORS[i%10]}">${pct}%</div>
       <div class="tleg-cnt">${cnt}</div>`;
@@ -951,12 +961,12 @@ function buildSrcChart(data){
       const srcRows=filtered.filter(r=>r.src===src);
       const tMap={};srcRows.forEach(r=>{if(r.t)tMap[r.t]=(tMap[r.t]||0)+1;});
       const topTypes=Object.entries(tMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
-      const tags=topTypes.map(([t,n],i)=>`<span style="padding:2px 7px;border-radius:10px;font-size:10px;background:${COLORS[i%10]}22;color:${COLORS[i%10]};border:1px solid ${COLORS[i%10]}33">${t} · ${n}</span>`).join(' ');
+      const tags=topTypes.map(([t,n],i)=>`<span style="padding:2px 7px;border-radius:10px;font-size:10px;background:${COLORS[i%10]}22;color:${COLORS[i%10]};border:1px solid ${COLORS[i%10]}33">${escHtml(t)} · ${n}</span>`).join(' ');
       const pct=(stotal/total*100).toFixed(1);
       const w=(stotal/(top5[0]?.[1]||1)*100).toFixed(0);
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:600;color:var(--text);flex:1">${src}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text);flex:1">${escHtml(src)}</span>
           <span style="font-size:12px;font-weight:700;color:var(--accent1)">${stotal}</span>
           <span style="font-size:11px;color:var(--text2)">${pct}%</span>
         </div>
@@ -1016,14 +1026,14 @@ function _renderContinued(data,st){
       const col=COLORS[i%COLORS.length];
       const photo=WORKER_PHOTOS[name];
       const photoHtml=photo
-        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${photo}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${name}"></div>`
-        :`<div style="width:44px;height:44px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:${col}">${name.charAt(0)}</div>`;
-      const tags=top.map(([t,n])=>`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${col}18;border:1px solid ${col}33;font-size:9.5px;color:${col};margin:2px">${t}&nbsp;<b>${n}</b></span>`).join('');
+        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}"></div>`
+        :`<div style="width:44px;height:44px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:${col}">${escHtml(name.charAt(0))}</div>`;
+      const tags=top.map(([t,n])=>`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${col}18;border:1px solid ${col}33;font-size:9.5px;color:${col};margin:2px">${escHtml(t)}&nbsp;<b>${n}</b></span>`).join('');
       wdHtml+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
         ${photoHtml}
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
-            <span style="font-size:12px;font-weight:700;color:${col}">${name}</span>
+            <span style="font-size:12px;font-weight:700;color:${col}">${escHtml(name)}</span>
             <span style="font-size:10px;color:var(--text2)">${cnt} งาน</span>
             <span style="font-size:10px;font-weight:600;color:${done_w===cnt?'var(--done)':'var(--inprog)'}">${done_w===cnt?'✅':'⏳'} ${done_w}/${cnt}</span>
             <span style="font-size:10px;color:var(--text2)">${(cnt/totalW2*100).toFixed(1)}%</span>
@@ -1196,8 +1206,8 @@ function filterTable(){
     if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return;
     vis++;
     const badge=badgeHtml(row.s===STATUS_DONE);
-    const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗</a>`:'—';
-    tbHtml+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${row.m}</td><td>${badge}</td><td><span class="ttag">${row.t||'—'}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.src}">${row.src}</td><td class="tsubj" title="${row.sub}">${row.sub}</td><td style="font-size:12px;color:var(--text2)">${row.w||'—'}</td><td>${ref}</td></tr>`;
+    const ref=(row.r&&/^https?:\/\/.+/.test(row.r))?`<a href="${escHtml(row.r)}" target="_blank" class="rlink">🔗</a>`:'—';
+    tbHtml+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${escHtml(row.m)}</td><td>${badge}</td><td><span class="ttag">${escHtml(row.t||'—')}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(row.src)}">${escHtml(row.src)}</td><td class="tsubj" title="${escHtml(row.sub)}">${escHtml(row.sub)}</td><td style="font-size:12px;color:var(--text2)">${escHtml(row.w||'—')}</td><td>${ref}</td></tr>`;
   });
   tb.innerHTML=tbHtml;
   document.getElementById('rcnt').textContent=vis;
@@ -1400,11 +1410,11 @@ function renderWmItems(){
   el.innerHTML=filtered.length
     ? filtered.map((row,i)=>{
         const isDone=row.s===STATUS_DONE;
-        const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗 ดูข้อมูล</a>`:'';
+        const ref=(row.r&&/^https?:\/\/.+/.test(row.r))?`<a href="${escHtml(row.r)}" target="_blank" class="rlink">🔗 ดูข้อมูล</a>`:'';
         return `<div class="wm-item" style="border-left:3px solid ${isDone?'var(--done)':'var(--inprog)'}">
-          <div class="wm-item-head"><span class="wm-item-num">${i+1}.</span>${badgeHtml(isDone)}<span class="ttag">${row.t||'—'}</span>${ref}</div>
-          <div class="wm-item-sub">${row.sub}</div>
-          <div class="wm-item-meta"><span class="wm-item-src">📌 ${row.src}</span><span class="wm-item-month">${row.m} ${row.y||CURRENT_YEAR}</span></div>
+          <div class="wm-item-head"><span class="wm-item-num">${i+1}.</span>${badgeHtml(isDone)}<span class="ttag">${escHtml(row.t||'—')}</span>${ref}</div>
+          <div class="wm-item-sub">${escHtml(row.sub)}</div>
+          <div class="wm-item-meta"><span class="wm-item-src">📌 ${escHtml(row.src)}</span><span class="wm-item-month">${escHtml(row.m)} ${row.y||CURRENT_YEAR}</span></div>
         </div>`;
       }).join('')
     : `<div style="color:var(--text2);text-align:center;padding:32px;grid-column:span 2;font-size:14px"><div style="font-size:28px;margin-bottom:8px">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>`;
@@ -1421,7 +1431,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 /* ── GAS ── */
 function saveGasUrl(){
   const u=document.getElementById('gasUrl').value.trim();
-  if(!u.startsWith('https://script.google.com')){alert('URL ไม่ถูกต้อง');return;}
+  try{const _p=new URL(u);if(_p.protocol!=='https:'||_p.hostname!=='script.google.com')throw 0;}catch{alert('URL ไม่ถูกต้อง');return;}
   gasUrl=u;localStorage.setItem('gasUrl',u);tryRefresh();
 }
 /* ── Retry with backoff ── */
@@ -1578,20 +1588,24 @@ function exportCSV(){
 
 /* ── Print ── */
 function printDashboard(){
-  /* Expand all collapsed panels before print */
   document.querySelectorAll('.expand-panel').forEach(p=>p.classList.add('open'));
   window.print();
 }
+window.addEventListener('afterprint',()=>{
+  document.querySelectorAll('.expand-panel').forEach(p=>p.classList.remove('open'));
+});
 
 /* ── Notification Toast ── */
+let _notifyTimer=null;
 function showNotify(title,body){
   const t=document.getElementById('notifyToast');
   document.getElementById('ntTitle').textContent=title;
   document.getElementById('ntBody').textContent=body;
   t.classList.add('show');
-  setTimeout(()=>hideNotify(),6000);
+  clearTimeout(_notifyTimer);
+  _notifyTimer=setTimeout(()=>hideNotify(),6000);
 }
-function hideNotify(){document.getElementById('notifyToast').classList.remove('show');}
+function hideNotify(){clearTimeout(_notifyTimer);_notifyTimer=null;document.getElementById('notifyToast').classList.remove('show');}
 
 /* ── Save/Restore filter state ── */
 function saveFilterState(){
