@@ -801,7 +801,7 @@ const tip={backgroundColor:'#0f1629',borderColor:'#1e2d4a',borderWidth:1,titleCo
 function render(data){
   if(!data||!data.length){
     const tb=document.getElementById('tBody');if(tb)tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text2)">ไม่มีข้อมูล</td></tr>';
-    document.getElementById('rcnt').textContent=0;
+    const rcnt=document.getElementById('rcnt');if(rcnt)rcnt.textContent=0;
     return;
   }
   DATA=data;
@@ -992,20 +992,22 @@ function _renderContinued(data,st){
     const wpct=(cnt/totalW*100).toFixed(1);
     const d=document.createElement('div');d.className='wrow';
     const wphoto=WORKER_PHOTOS[name];
+    const col=COLORS[i%COLORS.length];
+    const colNext=COLORS[(i+2)%COLORS.length];
     d.innerHTML=`<div style="display:flex;align-items:center;gap:7px;width:145px;flex-shrink:0">
         ${wphoto
-          ?`<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${COLORS[i]};box-shadow:0 0 8px ${COLORS[i]}55">
-              <img src="${wphoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${name}">
+          ?`<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 8px ${col}55">
+              <img src="${wphoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}">
             </div>`
-          :`<div style="width:34px;height:34px;border-radius:50%;background:${COLORS[i]}22;border:2px solid ${COLORS[i]};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:${COLORS[i]}">${name.charAt(0)}</div>`
+          :`<div style="width:34px;height:34px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:${col}">${escHtml(name.charAt(0))}</div>`
         }
-        <div class="wname" style="color:${COLORS[i]};width:auto;flex:1" title="${name}">${name}</div>
+        <div class="wname" style="color:${col};width:auto;flex:1" title="${escHtml(name)}">${escHtml(name)}</div>
       </div>
       <div class="wbwrap" style="position:relative">
-        <div class="wbar" style="width:${bpct}%;background:linear-gradient(90deg,${COLORS[i]},${COLORS[(i+2)%10]});position:relative;min-width:2px">
+        <div class="wbar" style="width:${bpct}%;background:linear-gradient(90deg,${col},${colNext});position:relative;min-width:2px">
           ${Number(bpct)>=40?`<span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:#fff;white-space:nowrap">${cnt} · ${wpct}%</span>`:''}
         </div>
-        ${Number(bpct)<40?`<span style="position:absolute;left:calc(${bpct}% + 6px);top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:${COLORS[i]};white-space:nowrap">${cnt} · ${wpct}%</span>`:''}
+        ${Number(bpct)<40?`<span style="position:absolute;left:calc(${bpct}% + 6px);top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:${col};white-space:nowrap">${cnt} · ${wpct}%</span>`:''}
       </div>`;
     d.onclick=()=>openWorkerModal(name,i,st);
     wl.appendChild(d);
@@ -1021,8 +1023,9 @@ function _renderContinued(data,st){
       const done_w=wRows.filter(r=>r.s===STATUS_DONE).length;
       const col=COLORS[i%COLORS.length];
       const photo=WORKER_PHOTOS[name];
-      const photoHtml=photo
-        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${escHtml(photo)}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}"></div>`
+      const safePhoto=photo&&/^https?:\/\/.+/.test(photo)?photo:'';
+      const photoHtml=safePhoto
+        ?`<div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 10px ${col}44"><img src="${safePhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}"></div>`
         :`<div style="width:44px;height:44px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:${col}">${escHtml(name.charAt(0))}</div>`;
       const tags=top.map(([t,n])=>`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${col}18;border:1px solid ${col}33;font-size:9.5px;color:${col};margin:2px">${escHtml(t)}&nbsp;<b>${n}</b></span>`).join('');
       wdHtml+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
@@ -1232,8 +1235,11 @@ function openWorkerModal(name,colorIdx,st){
   if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%COLORS.length]},${COLORS[(ci+2)%COLORS.length]})`;
 
   /* ── Circle avatar: pre-cropped square → perfect circle ── */
-  if(wmPhoto){
-    wmAvatarEl.innerHTML=`<img src="${wmPhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block" alt="${name}">`;
+  if(wmPhoto&&/^https?:\/\/.+/.test(wmPhoto)){
+    const img=document.createElement('img');
+    img.src=wmPhoto;img.alt=name;
+    img.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block';
+    wmAvatarEl.innerHTML='';wmAvatarEl.appendChild(img);
     wmAvatarEl.style.background='none';
     wmAvatarEl.style.color=COLORS[ci%COLORS.length];
     wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
@@ -1278,7 +1284,7 @@ function openWorkerModal(name,colorIdx,st){
   tl.innerHTML=tlHtml;
 
   /* Month data prep */
-  const wMonths=[...new Set(DATA.map(r=>r.m))];
+  const wMonths=[...new Set(rows.map(r=>r.m))];
   const wDM={},wPM={};
   rows.forEach(r=>{if(r.s===STATUS_DONE)wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
   const wmMonthTotal=rows.length||1;
@@ -1428,7 +1434,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 function saveGasUrl(){
   const u=document.getElementById('gasUrl').value.trim();
   try{const _p=new URL(u);if(_p.protocol!=='https:'||_p.hostname!=='script.google.com')throw 0;}catch{alert('URL ไม่ถูกต้อง');return;}
-  gasUrl=u;localStorage.setItem('gasUrl',u);tryRefresh();
+  gasUrl=u;localStorage.setItem('gasUrl',u);clearTimeout(_autoUpdateTimer);tryRefresh();
 }
 /* ── Retry with backoff ── */
 async function fetchWithRetry(url, retries=3, baseDelay=1000){
@@ -1608,12 +1614,13 @@ function scheduleAutoUpdate(){
   const h=Math.floor(msUntil/3600000),m=Math.floor((msUntil%3600000)/60000);
   const nuEl=document.getElementById('nextUpd');
   if(nuEl){nuEl.style.display='block';nuEl.textContent=`⏰ อัพเดทอัตโนมัติ 06:00 น. (อีก ${h} ชม. ${m} นาที)`;}
-  setTimeout(async()=>{
+  _autoUpdateTimer=setTimeout(async()=>{
     console.log('[Auto-update] กำลังดึงข้อมูล 06:00 น...');
     await tryRefresh();
     scheduleAutoUpdate();
   },msUntil);
 }
+let _autoUpdateTimer=null;
 
 /* ── ถ้ามี GAS URL ให้ refresh อัตโนมัติทันทีที่เปิด ── */
 (async()=>{
