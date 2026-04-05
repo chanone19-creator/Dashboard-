@@ -184,7 +184,7 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wmodal{max-width:1100px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden}
 
 /* Modal Header */
-.wm-head{position:relative;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;overflow:hidden}
+.wm-head{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;overflow:hidden}
 .wm-head-accent{position:absolute;top:0;left:0;right:0;height:3px;z-index:3}
 .wm-head-inner{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;position:relative;z-index:2}
 .wm-head-left{display:flex;align-items:center;gap:18px}
@@ -730,6 +730,7 @@ function csvRowToObj(r){
 
   return{
     m:r['เดือน']||'',
+    y:r['ปี']||r['Year']||'',
     s:r['สถานะ']||'',
     src:r['ต้นทาง']||r['แหล่งที่มา']||'',
     t:(r['ประเภทงาน']||'').trim(),
@@ -776,6 +777,7 @@ function stats(data){
 const pctPlugin={id:'pct',afterDraw(chart){
   if(chart.config.type!=='doughnut'&&chart.config.type!=='pie')return;
   const{ctx,data}=chart;
+  if(!data.datasets||!data.datasets[0]||!data.datasets[0].data||!data.datasets[0].data.length)return;
   const total=data.datasets[0].data.reduce((a,b)=>a+b,0);
   if(!total)return;
   chart.getDatasetMeta(0).data.forEach((arc,i)=>{
@@ -814,18 +816,19 @@ function render(data){
   if(curTypeMF!=='all'&&!months.includes(curTypeMF))curTypeMF='all';
   if(curSrcMF!=='all'&&!months.includes(curSrcMF))curSrcMF='all';
 
-  document.getElementById('kT').textContent=st.total;
-  document.getElementById('kD').textContent=st.done;
-  document.getElementById('kP').textContent=st.inprog;
-  document.getElementById('kW').textContent=st.topW.length;
-  document.getElementById('kTsub').textContent=months.join(' + ');
-  document.getElementById('kDsub').textContent=dp+'% ของทั้งหมด';
-  document.getElementById('kPsub').textContent=pp+'% ของทั้งหมด';
-  document.getElementById('kWsub').textContent=st.topW.reduce((a,b)=>a+b[1],0)+' ครั้ง (รวมทุกงาน)';
-  document.getElementById('kDbar').style.width=dp+'%';
-  document.getElementById('kPbar').style.width=pp+'%';
-  document.getElementById('hbadge').textContent=`ข้อมูล ${gasUrl?'Live':'Embedded'} · ${st.total} รายการ`;
-  document.getElementById('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. ${CURRENT_YEAR} · ${months.join(' – ')}`;
+  const _g=id=>document.getElementById(id);
+  if(_g('kT'))_g('kT').textContent=st.total;
+  if(_g('kD'))_g('kD').textContent=st.done;
+  if(_g('kP'))_g('kP').textContent=st.inprog;
+  if(_g('kW'))_g('kW').textContent=st.topW.length;
+  if(_g('kTsub'))_g('kTsub').textContent=months.join(' + ');
+  if(_g('kDsub'))_g('kDsub').textContent=dp+'% ของทั้งหมด';
+  if(_g('kPsub'))_g('kPsub').textContent=pp+'% ของทั้งหมด';
+  if(_g('kWsub'))_g('kWsub').textContent=st.topW.reduce((a,b)=>a+b[1],0)+' ครั้ง (รวมทุกงาน)';
+  if(_g('kDbar'))_g('kDbar').style.width=dp+'%';
+  if(_g('kPbar'))_g('kPbar').style.width=pp+'%';
+  if(_g('hbadge'))_g('hbadge').textContent=`ข้อมูล ${gasUrl?'Live':'Embedded'} · ${st.total} รายการ`;
+  if(_g('hSub'))_g('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. ${CURRENT_YEAR} · ${months.join(' – ')}`;
 
   Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};
 
@@ -904,7 +907,7 @@ function buildTypeChart(data){
       <div class="tleg-bar-wrap"><div class="tleg-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${COLORS[i%10]}"></div></div>
       <div class="tleg-pct" style="color:${COLORS[i%10]}">${pct}%</div>
       <div class="tleg-cnt">${cnt}</div>`;
-    d.onclick=()=>{document.getElementById('sInput').value=name;filterTable();document.getElementById('tBody').closest('.tsec').scrollIntoView({behavior:'smooth'});};
+    d.onclick=()=>{const si=document.getElementById('sInput');if(si)si.value=name;filterTable();const tb=document.getElementById('tBody');if(tb)tb.closest('.tsec')?.scrollIntoView({behavior:'smooth'});};
     legEl.appendChild(d);
   });
   /* Build month filter buttons for type — pass pre-computed months (no extra stats call) */
@@ -1187,6 +1190,7 @@ function setMonthMode(mode,btn){
   monthMode=mode;
   document.querySelectorAll('.mtbtn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  if(!DATA.length)return;
   const st=stats(DATA);
   const months=Object.keys(st.bM);
   buildMonthChart(DATA,months,st);
@@ -1194,7 +1198,7 @@ function setMonthMode(mode,btn){
 
 /* ── Filter Table ── */
 function filterTable(){
-  const sq=document.getElementById('sInput').value.toLowerCase();
+  const sq=(document.getElementById('sInput')?.value||'').toLowerCase();
   const tb=document.getElementById('tBody');if(!tb)return;let vis=0;let tbHtml='';
   DATA.forEach(row=>{
     if(curSF==='done'&&row.s!==STATUS_DONE)return;
@@ -1209,7 +1213,7 @@ function filterTable(){
     tbHtml+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${escHtml(row.m)}</td><td>${badge}</td><td><span class="ttag">${escHtml(row.t||'—')}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(row.src)}">${escHtml(row.src)}</td><td class="tsubj" title="${escHtml(row.sub)}">${escHtml(row.sub)}</td><td style="font-size:12px;color:var(--text2)">${escHtml(row.w||'—')}</td><td>${ref}</td></tr>`;
   });
   tb.innerHTML=tbHtml;
-  document.getElementById('rcnt').textContent=vis;
+  const rcntEl=document.getElementById('rcnt');if(rcntEl)rcntEl.textContent=vis;
 }
 function setSF(f,btn){curSF=f;saveFilterState();document.querySelectorAll('#sfGrp .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterTable();}
 
@@ -1303,7 +1307,7 @@ function openWorkerModal(name,colorIdx,st){
     const monthEl=document.getElementById('wmMonth');
     if(!donutEl||!monthEl)return;
     wmCharts.donut=new Chart(donutEl,{type:'pie',
-      data:{labels:tArr.map(t=>t[0]),datasets:[{data:tArr.map(t=>t[1]),backgroundColor:COLORS,borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
+      data:{labels:tArr.map(t=>t[0]),datasets:[{data:tArr.map(t=>t[1]),backgroundColor:tArr.map((_,i)=>COLORS[i%COLORS.length]),borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${(ctx.parsed/rows.length*100).toFixed(1)}%)`}}}},
       plugins:[pctPlugin]
@@ -1406,6 +1410,7 @@ function renderWmItems(){
     return true;
   });
   const el=document.getElementById('wmItems');
+  if(!el)return;
   const ttl=document.getElementById('wmItemsTitle');
   if(ttl)ttl.textContent=`รายการงาน (${filtered.length}/${wmRows.length})`;
 
@@ -1454,8 +1459,8 @@ async function fetchWithRetry(url, retries=3, baseDelay=1000){
 async function tryRefresh(){
   /* ไม่รีเฟรชขณะ worker modal เปิดอยู่ ป้องกัน render() ทับ chart */
   if(workerModalEl.classList.contains('open'))return;
-  const btn=document.getElementById('rbtn');btn.classList.add('spin');
-  if(!gasUrl){document.getElementById('corsNotice').classList.add('show');btn.classList.remove('spin');return;}
+  const btn=document.getElementById('rbtn');if(btn)btn.classList.add('spin');
+  if(!gasUrl){const cn=document.getElementById('corsNotice');if(cn)cn.classList.add('show');if(btn)btn.classList.remove('spin');return;}
   const oldCount=DATA.length;
   try{
     const res=await fetchWithRetry(gasUrl);
@@ -1486,7 +1491,7 @@ async function tryRefresh(){
     } else if(oldCount>0 && mapped.length===oldCount){
       showNotify('✅ ข้อมูลล่าสุดแล้ว','ไม่มีรายการใหม่ ('+mapped.length+' รายการ)');
     }
-    document.getElementById('footer').textContent=`Dashboard รวมสรุปงาน ปี ${CURRENT_YEAR} · Live · `+new Date().toLocaleTimeString('th-TH');
+    const ftEl=document.getElementById('footer');if(ftEl)ftEl.textContent=`Dashboard รวมสรุปงาน ปี ${CURRENT_YEAR} · Live · `+new Date().toLocaleTimeString('th-TH');
   }catch(e){
     console.error('[Dashboard] Refresh error:',e);
     const msg=e.message||String(e);
@@ -1496,7 +1501,7 @@ async function tryRefresh(){
       showRefreshError('❌ Error: '+msg);
     }
   }
-  finally{btn.classList.remove('spin');}
+  finally{if(btn)btn.classList.remove('spin');}
 }
 
 function showRefreshError(html){
