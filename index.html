@@ -364,12 +364,45 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
       <li>เปิด Google Sheets → เมนู <strong>Extensions → Apps Script</strong></li>
       <li>ลบโค้ดเดิมทั้งหมด แล้ววาง <strong>โค้ดนี้ทั้งหมด</strong>:</li>
     </ol>
-    <code style="display:block;white-space:pre;font-size:11px;line-height:1.6;padding:12px;margin:8px 0">function doGet(e) {
-  var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAe91vfK5wCBTngzgciQST4EiAYTwGWTWsGz1Td-HHAk_z1Nboz-_9JeMztJ9PPglT8AteucZEOcr5/pub?gid=1062233043&amp;single=true&amp;output=csv";
-  var response = UrlFetchApp.fetch(CSV_URL, {muteHttpExceptions: true});
-  var output = ContentService.createTextOutput(response.getContentText());
-  output.setMimeType(ContentService.MimeType.TEXT);
-  return output;
+    <code style="display:block;white-space:pre;font-size:11px;line-height:1.6;padding:12px;margin:8px 0">var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAe91vfK5wCBTngzgciQST4EiAYTwGWTWsGz1Td-HHAk_z1Nboz-_9JeMztJ9PPglT8AteucZEOcr5/pub?gid=1062233043&amp;single=true&amp;output=csv";
+var CACHE_SECS = 300; // cache 5 นาที
+
+function doGet(e) {
+  try {
+    // ── ลอง cache ก่อน ──
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get('csv_data');
+    if (cached) {
+      return ContentService.createTextOutput(cached)
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    // ── ดึงข้อมูลจาก Google Sheets ──
+    var res = UrlFetchApp.fetch(CSV_URL, { muteHttpExceptions: true });
+    var code = res.getResponseCode();
+
+    if (code !== 200) {
+      throw new Error('Google Sheets ตอบกลับ HTTP ' + code +
+        ' — ตรวจสอบว่า Sheet ได้รับการ Publish แล้ว');
+    }
+
+    var text = res.getContentText('UTF-8');
+    if (!text || text.trim().length < 5) {
+      throw new Error('ข้อมูลจาก Sheets ว่างเปล่า — ตรวจสอบ gid และ filter');
+    }
+
+    // ── บันทึก cache ──
+    try { cache.put('csv_data', text, CACHE_SECS); } catch (ce) { /* quota เต็ม */ }
+
+    return ContentService.createTextOutput(text)
+      .setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (err) {
+    // ── ส่ง JSON error กลับให้ Dashboard แสดงข้อความที่ชัดเจน ──
+    return ContentService.createTextOutput(
+      JSON.stringify({ __gas_error: true, message: err.message })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 }</code>
     <ol start="3">
       <li>กด <strong>Deploy → New deployment</strong> → Type: <strong>Web app</strong></li>
@@ -1465,6 +1498,18 @@ async function tryRefresh(){
   try{
     const res=await fetchWithRetry(gasUrl);
     const text=await res.text();
+
+    /* ── ตรวจจับ JSON error จาก GAS ── */
+    const trimmed=text.trim();
+    if(trimmed.startsWith('{')){
+      try{
+        const obj=JSON.parse(trimmed);
+        if(obj.__gas_error) throw new Error('GAS: '+obj.message);
+      }catch(parseErr){
+        if(parseErr.message.startsWith('GAS:')) throw parseErr;
+        /* ไม่ใช่ JSON error — ข้ามไป parse เป็น CSV ต่อ */
+      }
+    }
 
     /* ── Diagnostic: log headers to console ── */
     const firstLine=text.trim().split(/\r?\n/)[0];
