@@ -515,7 +515,7 @@ function doGet(e) {
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <div class="sbox">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ea3c3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="sInput" placeholder="ค้นหาเรื่อง / ต้นทาง..." oninput="filterTable()">
+            <input type="text" id="sInput" placeholder="ค้นหาเรื่อง / ต้นทาง..." oninput="filterTableDebounced()">
           </div>
           <div class="fgrp" id="sfGrp">
             <button class="fbtn active" onclick="setSF('all',this)">ทั้งหมด</button>
@@ -594,7 +594,7 @@ function doGet(e) {
           <!-- search box -->
           <div class="sbox" style="width:220px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ea3c3" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="wmSearch" type="text" placeholder="ค้นหารายการ…" oninput="renderWmItems()" style="width:160px">
+            <input id="wmSearch" type="text" placeholder="ค้นหารายการ…" oninput="renderWmItemsDebounced()" style="width:160px">
           </div>
         </div>
         <!-- row 1: filter สถานะ -->
@@ -708,12 +708,15 @@ const WORKER_PHOTOS={
 };
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
-let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all';
+let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],curTypeMF='all',curSrcMF='all';
 const workerModalEl=document.getElementById('workerModal');
+function debounce(fn,ms){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);};}
+const filterTableDebounced=debounce(()=>filterTable(),200);
+const renderWmItemsDebounced=debounce(()=>renderWmItems(),200);
 
 /* ── CSV helpers ── */
 function parseCSV(text){
-  const lines=text.trim().split(/\r?\n/);
+  const lines=text.replace(/^\uFEFF/,'').trim().split(/\r?\n/);
   if(lines.length<2)return null;
   const rawHdr=parseLine(lines[0]);
   /* handle duplicate column names: append _N suffix */
@@ -732,12 +735,12 @@ function parseCSV(text){
     return o;
   }).filter(r=>(r['เดือน']||'').trim()&&(r['สถานะ']||'').trim());
 }
-function parseLine(line){const res=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){res.push(cur);cur='';}else cur+=c;}res.push(cur);return res;}
+function parseLine(line){const res=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&i+1<line.length&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){res.push(cur);cur='';}else cur+=c;}res.push(cur);return res;}
 function addWorkerToList(v, workers, seen){
   if(!v)return;
   v=v.trim();
-  if(!v||v==='-'||v==='nan'||v==='ทั้งหมด')return;
-  v.split(/[,،]/).map(x=>x.trim()).filter(x=>x&&x!=='-'&&x!=='nan').forEach(n=>{
+  if(!v||v==='-'||v.toLowerCase()==='nan'||v==='ทั้งหมด')return;
+  v.split(/[,،;]/).map(x=>x.trim()).filter(x=>x&&x!=='-'&&x.toLowerCase()!=='nan').forEach(n=>{
     if(!seen.has(n)){seen.add(n);workers.push(n);}
   });
 }
@@ -834,7 +837,7 @@ const tip={backgroundColor:'#0f1629',borderColor:'#1e2d4a',borderWidth:1,titleCo
 
 /* ── Main Render ── */
 function render(data){
-  if(!data||!data.length){
+  if(!Array.isArray(data)||!data.length){
     const tb=document.getElementById('tBody');if(tb)tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text2)">ไม่มีข้อมูล</td></tr>';
     const rcnt=document.getElementById('rcnt');if(rcnt)rcnt.textContent=0;
     return;
@@ -1135,7 +1138,7 @@ function _renderContinued(data,st){
       yfg.appendChild(allYBtn);
       years.forEach(y=>{
         const b=document.createElement('button');b.className='fbtn';b.textContent='ปี '+y;
-        b.onclick=function(){curYF=y;yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');filterTable();};
+        b.onclick=function(){curYF=String(y);yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');filterTable();};
         yfg.appendChild(b);
       });
     } else {
@@ -1149,7 +1152,7 @@ function _renderContinued(data,st){
   /* Month filters */
   const mfg=document.getElementById('mfGrp');mfg.innerHTML='';
   months.forEach(m=>{
-    const btn=document.createElement('button');btn.className='fbtn';btn.textContent=m;
+    const btn=document.createElement('button');btn.className='fbtn'+(curMF===m?' active':'');btn.textContent=m;
     btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');filterTable();};
     mfg.appendChild(btn);
   });
@@ -1236,7 +1239,7 @@ function filterTable(){
   DATA.forEach(row=>{
     if(curSF==='done'&&row.s!==STATUS_DONE)return;
     if(curSF==='inprog'&&row.s!==STATUS_INPROG)return;
-    const rowYear=row.y||CURRENT_YEAR;
+    const rowYear=String(row.y||CURRENT_YEAR);
     if(curYF!=='all'&&rowYear!==curYF)return;
     if(curMF!=='all'&&row.m!==curMF)return;
     if(sq&&!(row.sub||'').toLowerCase().includes(sq)&&!(row.src||'').toLowerCase().includes(sq)&&!(row.w||'').toLowerCase().includes(sq)&&!(row.t||'').toLowerCase().includes(sq))return;
@@ -1257,7 +1260,7 @@ function openWorkerModal(name,colorIdx,st){
     const wArr=r.wa||(r.w?r.w.split(',').map(x=>x.trim()).filter(Boolean):[]);
     return wArr.some(w=>w===name);
   });
-  wmRows=rows;wmFilter_='all';wmFS={status:'all',year:'all',month:'all',type:'all'};
+  wmRows=rows;wmFS={status:'all',year:'all',month:'all',type:'all'};
   const done=rows.filter(r=>r.s===STATUS_DONE).length;
   const prog=rows.length-done;
   const totalW=st?st.topW.reduce((a,b)=>a+b[1],0):rows.length;
@@ -1386,8 +1389,9 @@ let wmFS={status:'all',year:'all',month:'all',type:'all'};
 function wmSetFilter(dim,val,btn){
   wmFS[dim]=val;
   const grpId=dim==='status'?'wmStatusGrp':dim==='year'?'wmYearGrp':dim==='month'?'wmMonthGrp':'wmTypeGrp';
-  document.getElementById(grpId).querySelectorAll('.wm-fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  const grpEl=document.getElementById(grpId);
+  if(grpEl)grpEl.querySelectorAll('.wm-fbtn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
   renderWmItems();
 }
 
@@ -1406,7 +1410,7 @@ function buildWmFilters(){
   allY.onclick=function(){wmSetFilter('year','all',this);};yg.appendChild(allY);
   years.forEach(y=>{
     const b=document.createElement('button');b.className='wm-fbtn';b.textContent='ปี '+y;
-    b.onclick=function(){wmSetFilter('year',y,this);};yg.appendChild(b);
+    b.onclick=function(){wmSetFilter('year',String(y),this);};yg.appendChild(b);
   });
   document.getElementById('wmYearFilterRow').style.display=years.length>1?'flex':'none';
 
@@ -1436,7 +1440,7 @@ function renderWmItems(){
   const filtered=wmRows.filter(r=>{
     if(wmFS.status==='done'&&r.s!==STATUS_DONE)return false;
     if(wmFS.status==='inprog'&&r.s===STATUS_DONE)return false;
-    if(wmFS.year!=='all'&&(r.y||CURRENT_YEAR)!==wmFS.year)return false;
+    if(wmFS.year!=='all'&&String(r.y||CURRENT_YEAR)!==wmFS.year)return false;
     if(wmFS.month!=='all'&&r.m!==wmFS.month)return false;
     if(wmFS.type!=='all'&&r.t!==wmFS.type)return false;
     if(sq&&![r.sub,r.src,r.t,r.m,r.y||CURRENT_YEAR].some(f=>(f||'').toLowerCase().includes(sq)))return false;
@@ -1603,8 +1607,8 @@ function toggleTheme(){
   document.getElementById('themeIcon').innerHTML=isLight
     ?'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
     :'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
-  /* Re-render charts with appropriate colors */
-  if(DATA.length)render(DATA);
+  /* Re-render charts with appropriate colors (skip if modal is open to avoid chart conflicts) */
+  if(DATA.length&&!workerModalEl.classList.contains('open'))render(DATA);
 }
 (function(){
   const saved=localStorage.getItem('theme');
