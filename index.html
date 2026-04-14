@@ -708,6 +708,8 @@ const WORKER_PHOTOS={
 };
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
+const MONTH_ORDER={'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+function sortMonths(arr){return arr.slice().sort((a,b)=>(MONTH_ORDER[a]||99)-(MONTH_ORDER[b]||99));}
 let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],curTypeMF='all',curSrcMF='all';
 const workerModalEl=document.getElementById('workerModal');
 function debounce(fn,ms){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);};}
@@ -846,7 +848,7 @@ function render(data){
   const st=stats(data);
   const dp=st.total?(st.done/st.total*100).toFixed(1):0;
   const pp=st.total?(st.inprog/st.total*100).toFixed(1):0;
-  const months=Object.keys(st.bM);
+  const months=sortMonths(Object.keys(st.bM));
   /* รีเซ็ต filter state ที่ไม่ valid กับชุดข้อมูลใหม่ */
   if(curMF!=='all'&&!months.includes(curMF))curMF='all';
   if(curTypeMF!=='all'&&!months.includes(curTypeMF))curTypeMF='all';
@@ -1017,7 +1019,7 @@ function buildSrcChart(data){
 
 /* ── Main Render (continued) ── */
 function _renderContinued(data,st){
-  const months=Object.keys(st.bM);
+  const months=sortMonths(Object.keys(st.bM));
 
   /* --- Month Chart --- */
   buildMonthChart(data,months,st);
@@ -1150,12 +1152,15 @@ function _renderContinued(data,st){
   }
 
   /* Month filters */
-  const mfg=document.getElementById('mfGrp');mfg.innerHTML='';
-  months.forEach(m=>{
-    const btn=document.createElement('button');btn.className='fbtn'+(curMF===m?' active':'');btn.textContent=m;
-    btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');filterTable();};
-    mfg.appendChild(btn);
-  });
+  const mfg=document.getElementById('mfGrp');
+  if(mfg){
+    mfg.innerHTML='';
+    months.forEach(m=>{
+      const btn=document.createElement('button');btn.className='fbtn'+(curMF===m?' active':'');btn.textContent=m;
+      btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');filterTable();};
+      mfg.appendChild(btn);
+    });
+  }
   filterTable();
 }
 
@@ -1228,7 +1233,7 @@ function setMonthMode(mode,btn){
   btn.classList.add('active');
   if(!DATA.length)return;
   const st=stats(DATA);
-  const months=Object.keys(st.bM);
+  const months=sortMonths(Object.keys(st.bM));
   buildMonthChart(DATA,months,st);
 }
 
@@ -1401,7 +1406,7 @@ function wmFilter(f,btn){wmSetFilter('status',f,btn);}
 /* Build dynamic year + month + type filter buttons from wmRows */
 function buildWmFilters(){
   const years=[...new Set(wmRows.map(r=>r.y||CURRENT_YEAR))].sort();
-  const months=[...new Set(wmRows.map(r=>r.m))];
+  const months=sortMonths([...new Set(wmRows.map(r=>r.m))]);
   const types=[...new Set(wmRows.map(r=>r.t).filter(Boolean))].sort();
 
   /* year buttons */
@@ -1619,25 +1624,34 @@ function toggleTheme(){
 })();
 
 /* ── Print ── */
+let _printPanelState=null;
 function printDashboard(){
-  document.querySelectorAll('.expand-panel').forEach(p=>p.classList.add('open'));
+  const panels=document.querySelectorAll('.expand-panel');
+  _printPanelState=Array.from(panels).map(p=>p.classList.contains('open'));
+  panels.forEach(p=>p.classList.add('open'));
   window.print();
 }
 window.addEventListener('afterprint',()=>{
-  document.querySelectorAll('.expand-panel').forEach(p=>p.classList.remove('open'));
+  const panels=document.querySelectorAll('.expand-panel');
+  if(_printPanelState){
+    panels.forEach((p,i)=>p.classList.toggle('open',_printPanelState[i]===true));
+    _printPanelState=null;
+  } else {
+    panels.forEach(p=>p.classList.remove('open'));
+  }
 });
 
 /* ── Notification Toast ── */
 let _notifyTimer=null;
 function showNotify(title,body){
-  const t=document.getElementById('notifyToast');
-  document.getElementById('ntTitle').textContent=title;
-  document.getElementById('ntBody').textContent=body;
+  const t=document.getElementById('notifyToast');if(!t)return;
+  const ntT=document.getElementById('ntTitle');if(ntT)ntT.textContent=title;
+  const ntB=document.getElementById('ntBody');if(ntB)ntB.textContent=body;
   t.classList.add('show');
   clearTimeout(_notifyTimer);
   _notifyTimer=setTimeout(()=>hideNotify(),6000);
 }
-function hideNotify(){clearTimeout(_notifyTimer);_notifyTimer=null;document.getElementById('notifyToast').classList.remove('show');}
+function hideNotify(){clearTimeout(_notifyTimer);_notifyTimer=null;const t=document.getElementById('notifyToast');if(t)t.classList.remove('show');}
 
 /* ── Save/Restore filter state ── */
 function saveFilterState(){
@@ -1669,6 +1683,8 @@ function scheduleAutoUpdate(){
   const nuEl=document.getElementById('nextUpd');
   if(nuEl){nuEl.style.display='block';nuEl.textContent=`⏰ อัพเดทอัตโนมัติ 06:00 น. (อีก ${h} ชม. ${m} นาที)`;}
   _autoUpdateTimer=setTimeout(async()=>{
+    _autoUpdateTimer=null;
+    if(!gasUrl)return; // ยกเลิกถ้า GAS URL ถูกลบออก
     console.log('[Auto-update] กำลังดึงข้อมูล 06:00 น...');
     await tryRefresh();
     scheduleAutoUpdate();
