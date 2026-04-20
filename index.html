@@ -779,20 +779,6 @@ function csvRowToObj(r){
   };
 }
 
-/* ── Debug: วิเคราะห์ headers จาก CSV (เรียกจาก browser console) ── */
-function debugCSV(text){
-  const lines=text.trim().split(/\r?\n/);
-  const hdr=parseLine(lines[0]);
-  console.log('=== CSV Headers ===');
-  hdr.forEach((h,i)=>console.log(i,JSON.stringify(h)));
-  if(lines[1]){
-    const row=parseLine(lines[1]);
-    console.log('=== Row 1 Sample ===');
-    hdr.forEach((h,i)=>console.log(h,'=',JSON.stringify(row[i]||'')));
-  }
-  return hdr;
-}
-
 /* ── Stats ── */
 function stats(data){
   const total=data.length,done=data.filter(r=>r.s===STATUS_DONE).length;
@@ -1520,21 +1506,9 @@ async function tryRefresh(){
       }
     }
 
-    /* ── Diagnostic: log headers to console ── */
-    const firstLine=text.trim().split(/\r?\n/)[0];
-    const hdrs=parseLine(firstLine);
-    console.log('[Dashboard] CSV headers ('+hdrs.length+' cols):',hdrs);
-    const wCols=hdrs.filter(h=>h.includes('ผู้ปฏิบัติงาน')||h==='ทั้งหมด');
-    console.log('[Dashboard] Worker columns found:',wCols);
-
     const rows=parseCSV(text);
     if(!rows||rows.length===0)throw new Error('ไม่พบข้อมูล (rows=0) — ตรวจสอบ sheet tab และ filter');
     const mapped=rows.map(csvRowToObj);
-
-    /* ── Diagnostic: show worker detection result ── */
-    const wStats=mapped.reduce((a,r)=>{r.wa.forEach(w=>{a[w]=(a[w]||0)+1;});return a;},{});
-    console.log('[Dashboard] Workers detected:',wStats);
-    console.log('[Dashboard] Total rows:',mapped.length,'| Workers:',Object.keys(wStats).length);
 
     render(mapped);
     updateLupdNow(mapped.length+' รายการ');
