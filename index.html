@@ -1074,14 +1074,21 @@ function _renderContinued(data,st){
 
 
   /* --- Status Pie + expand detail --- */
-  charts.stat=new Chart(document.getElementById('cStat'),{type:'pie',
-    data:{labels:['เสร็จแล้ว','กำลังดำเนิน'],datasets:[{data:[st.done,st.inprog],backgroundColor:['rgba(0,201,122,.9)','rgba(255,159,67,.9)'],borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{...tip,callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${(ctx.parsed/st.total*100).toFixed(1)}%)`}}}},
-    plugins:[pctPlugin]
-  });
+  const cStatEl=document.getElementById('cStat');
   const sl=document.getElementById('statLegend');
-  if(sl){
+  if(st.total>0){
+    if(cStatEl){cStatEl.style.display='';}
+    charts.stat=new Chart(cStatEl,{type:'pie',
+      data:{labels:['เสร็จแล้ว','กำลังดำเนิน'],datasets:[{data:[st.done,st.inprog],backgroundColor:['rgba(0,201,122,.9)','rgba(255,159,67,.9)'],borderColor:'#141b2d',borderWidth:2,hoverBorderWidth:3,hoverBorderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{...tip,callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${(ctx.parsed/st.total*100).toFixed(1)}%)`}}}},
+      plugins:[pctPlugin]
+    });
+  } else {
+    if(cStatEl)cStatEl.style.display='none';
+    if(sl)sl.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">ไม่มีข้อมูล</div>';
+  }
+  if(st.total>0&&sl){
     let slHtml='';
     [{l:STATUS_DONE,n:st.done,c:'#00c97a'},{l:STATUS_INPROG,n:st.inprog,c:'#ff9f43'}].forEach(item=>{
       const pct=st.total?(item.n/st.total*100).toFixed(1):0;
@@ -1289,7 +1296,9 @@ function openWorkerModal(name,colorIdx,st){
   document.getElementById('wmKD').textContent=done;
   document.getElementById('wmKP').textContent=prog;
   document.getElementById('wmKW').textContent=wmPct+'%';
-  document.getElementById('wmKTsub').textContent=`เดือน ${[...new Set(rows.map(r=>r.m))].join(', ')}`;
+  const _wmMonths=sortMonths([...new Set(rows.map(r=>r.m))]);
+  const wmKTsubEl=document.getElementById('wmKTsub');
+  if(wmKTsubEl)wmKTsubEl.textContent=_wmMonths.length?`เดือน ${_wmMonths.join(', ')}`:'—';
   document.getElementById('wmKDsub').textContent=(rows.length?(done/rows.length*100).toFixed(1):0)+'% ของงานตัวเอง';
   document.getElementById('wmKPsub').textContent=(rows.length?(prog/rows.length*100).toFixed(1):0)+'% ของงานตัวเอง';
 
@@ -1466,7 +1475,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 /* ── GAS ── */
 function saveGasUrl(){
   const u=document.getElementById('gasUrl').value.trim();
-  try{const _p=new URL(u);if(_p.protocol!=='https:'||_p.hostname!=='script.google.com')throw 0;}catch{alert('URL ไม่ถูกต้อง');return;}
+  try{
+    const _p=new URL(u);
+    if(_p.protocol!=='https:'||_p.hostname!=='script.google.com'||!_p.pathname.includes('/macros/'))throw 0;
+  }catch{alert('URL ไม่ถูกต้อง — ต้องเป็น https://script.google.com/macros/s/.../exec');return;}
   gasUrl=u;localStorage.setItem('gasUrl',u);clearTimeout(_autoUpdateTimer);tryRefresh();
 }
 /* ── Retry with backoff ── */
@@ -1658,9 +1670,8 @@ function scheduleAutoUpdate(){
   if(nuEl){nuEl.style.display='block';nuEl.textContent=`⏰ อัพเดทอัตโนมัติ 06:00 น. (อีก ${h} ชม. ${m} นาที)`;}
   _autoUpdateTimer=setTimeout(async()=>{
     _autoUpdateTimer=null;
-    if(!gasUrl)return; // ยกเลิกถ้า GAS URL ถูกลบออก
-    console.log('[Auto-update] กำลังดึงข้อมูล 06:00 น...');
-    await tryRefresh();
+    if(!gasUrl)return;
+    try{await tryRefresh();}catch(e){console.error('[Auto-update]',e);}
     scheduleAutoUpdate();
   },msUntil);
 }
@@ -1669,8 +1680,8 @@ let _autoUpdateTimer=null;
 /* ── ถ้ามี GAS URL ให้ refresh อัตโนมัติทันทีที่เปิด ── */
 (async()=>{
   if(gasUrl){
-    await tryRefresh();   // ดึงข้อมูลล่าสุดจาก GAS ทันที
-    scheduleAutoUpdate(); // แล้วค่อยตั้ง schedule 06:00 น.
+    try{await tryRefresh();}catch(e){console.error('[Init]',e);}
+    scheduleAutoUpdate();
   }
 })();
 </script>
