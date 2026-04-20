@@ -325,6 +325,23 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 .loading-overlay{position:absolute;inset:0;background:var(--card);display:flex;align-items:center;justify-content:center;border-radius:14px;z-index:5}
 .loading-overlay .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent1);border-radius:50%;animation:spin .8s linear infinite}
 
+/* Export PIN overlay */
+#exportPinOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;align-items:center;justify-content:center;}
+#exportPinOverlay.open{display:flex;}
+.ep-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 32px 28px;width:320px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.5);text-align:center;position:relative;}
+.ep-box h3{margin:0 0 6px;font-size:1.15rem;color:var(--text);}
+.ep-box p{margin:0 0 20px;font-size:.82rem;color:var(--muted);line-height:1.5;}
+.ep-pin-input{width:100%;padding:12px 16px;font-size:1.4rem;letter-spacing:.35em;text-align:center;background:var(--bg);color:var(--text);border:2px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s;}
+.ep-pin-input:focus{border-color:var(--accent1);}
+.ep-pin-input.error{border-color:#ff4466;animation:ep-shake .3s;}
+@keyframes ep-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ep-actions{display:flex;gap:10px;margin-top:16px;}
+.ep-btn{flex:1;padding:10px;border-radius:9px;border:none;cursor:pointer;font-size:.9rem;font-weight:600;transition:opacity .2s;}
+.ep-btn-ok{background:var(--accent1);color:#0d1117;}
+.ep-btn-cancel{background:var(--border);color:var(--text);}
+.ep-btn:hover{opacity:.85;}
+.ep-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;}
+
 </style>
 </head>
 <body>
@@ -544,6 +561,20 @@ function doGet(e) {
 <!-- Notification Toast -->
 <div class="notify-toast" id="notifyToast" role="alert" aria-live="assertive" aria-atomic="true"><button class="nt-close" onclick="hideNotify()" aria-label="ปิดการแจ้งเตือน">✕</button><div class="nt-title" id="ntTitle"></div><div class="nt-body" id="ntBody"></div></div>
 
+<!-- Export PIN Overlay (creator only — trigger: Ctrl+Shift+E) -->
+<div id="exportPinOverlay" role="dialog" aria-modal="true" aria-labelledby="epTitle">
+  <div class="ep-box">
+    <button class="ep-close" onclick="closeExportPin()" aria-label="ปิด">✕</button>
+    <h3 id="epTitle">🔒 ส่งออก CSV</h3>
+    <p>ฟีเจอร์นี้สำหรับผู้สร้างเท่านั้น<br>กรอก PIN เพื่อดาวน์โหลดข้อมูล</p>
+    <input id="epPinInput" class="ep-pin-input" type="password" maxlength="20" placeholder="PIN" autocomplete="off" inputmode="numeric">
+    <div class="ep-actions">
+      <button class="ep-btn ep-btn-cancel" onclick="closeExportPin()">ยกเลิก</button>
+      <button class="ep-btn ep-btn-ok" onclick="verifyExportPin()">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <!-- Worker Dashboard Modal -->
 
 
@@ -710,6 +741,7 @@ const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
 const MONTH_ORDER={'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 function sortMonths(arr){return arr.slice().sort((a,b)=>(MONTH_ORDER[a]||99)-(MONTH_ORDER[b]||99));}
+const EXPORT_PIN='2569'; /* ← เปลี่ยนรหัสผ่านได้ที่นี่ */
 let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],curTypeMF='all',curSrcMF='all';
 const workerModalEl=document.getElementById('workerModal');
 function debounce(fn,ms){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);};}
@@ -1684,6 +1716,54 @@ let _autoUpdateTimer=null;
     scheduleAutoUpdate();
   }
 })();
+
+/* ── CSV Export (PIN-protected) ── */
+function showExportPin(){
+  const el=document.getElementById('exportPinOverlay');
+  if(!el)return;
+  const inp=document.getElementById('epPinInput');
+  if(inp){inp.value='';inp.classList.remove('error');}
+  el.classList.add('open');
+  setTimeout(()=>inp&&inp.focus(),80);
+}
+function closeExportPin(){
+  const el=document.getElementById('exportPinOverlay');
+  if(el)el.classList.remove('open');
+}
+function verifyExportPin(){
+  const inp=document.getElementById('epPinInput');
+  if(!inp)return;
+  if(inp.value===EXPORT_PIN){
+    closeExportPin();
+    exportCSV();
+  } else {
+    inp.classList.remove('error');
+    void inp.offsetWidth; // reflow to restart animation
+    inp.classList.add('error');
+    inp.value='';
+    inp.focus();
+  }
+}
+function exportCSV(){
+  if(!DATA||!DATA.length){showNotify('ไม่มีข้อมูล','ยังไม่มีข้อมูลให้ส่งออก','⚠️');return;}
+  const headers=['เดือน','ปี','สถานะ','ประเภทงาน','แหล่งที่มา','เรื่อง','ผู้ปฏิบัติงาน','อ้างอิง'];
+  const fieldMap={เดือน:'m',ปี:'y',สถานะ:'s',ประเภทงาน:'tp',แหล่งที่มา:'src',เรื่อง:'t',ผู้ปฏิบัติงาน:'w',อ้างอิง:'ref'};
+  const esc=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s;};
+  const rows=[headers.join(','),...DATA.map(r=>headers.map(h=>esc(r[fieldMap[h]]||'')).join(','))];
+  const bom='\uFEFF';
+  const blob=new Blob([bom+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const today=new Date().toISOString().slice(0,10);
+  const fname=`dashboard_${CURRENT_YEAR}_${today}.csv`;
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  showNotify('ส่งออก CSV สำเร็จ',`ไฟล์: ${fname} (${DATA.length} รายการ)`,'📥');
+}
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.shiftKey&&e.key==='E'){e.preventDefault();showExportPin();}
+  if(e.key==='Escape'){const el=document.getElementById('exportPinOverlay');if(el&&el.classList.contains('open')){closeExportPin();}}
+});
+document.getElementById('epPinInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')verifyExportPin();});
 </script>
 </body>
 </html>
