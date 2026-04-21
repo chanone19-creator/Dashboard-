@@ -330,7 +330,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 #exportPinOverlay.open{display:flex;}
 .ep-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 32px 28px;width:320px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.5);text-align:center;position:relative;}
 .ep-box h3{margin:0 0 6px;font-size:1.15rem;color:var(--text);}
-.ep-box p{margin:0 0 20px;font-size:.82rem;color:var(--muted);line-height:1.5;}
+.ep-box p{margin:0 0 20px;font-size:.82rem;color:var(--text2);line-height:1.5;}
 .ep-pin-input{width:100%;padding:12px 16px;font-size:1.4rem;letter-spacing:.35em;text-align:center;background:var(--bg);color:var(--text);border:2px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s;}
 .ep-pin-input:focus{border-color:var(--accent1);}
 .ep-pin-input.error{border-color:#ff4466;animation:ep-shake .3s;}
@@ -340,7 +340,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 .ep-btn-ok{background:var(--accent1);color:#0d1117;}
 .ep-btn-cancel{background:var(--border);color:var(--text);}
 .ep-btn:hover{opacity:.85;}
-.ep-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;}
+.ep-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;line-height:1;}
 
 </style>
 </head>
@@ -1745,7 +1745,7 @@ function verifyExportPin(){
   }
 }
 function exportCSV(){
-  if(!DATA||!DATA.length){showNotify('ไม่มีข้อมูล','ยังไม่มีข้อมูลให้ส่งออก','⚠️');return;}
+  if(!DATA||!DATA.length){showNotify('⚠️ ไม่มีข้อมูล','ยังไม่มีข้อมูลให้ส่งออก');return;}
   const headers=['เดือน','ปี','สถานะ','ประเภทงาน','แหล่งที่มา','เรื่อง','ผู้ปฏิบัติงาน','อ้างอิง'];
   const fieldMap={เดือน:'m',ปี:'y',สถานะ:'s',ประเภทงาน:'tp',แหล่งที่มา:'src',เรื่อง:'t',ผู้ปฏิบัติงาน:'w',อ้างอิง:'ref'};
   const esc=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s;};
@@ -1757,7 +1757,7 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=fname;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),5000);
-  showNotify('ส่งออก CSV สำเร็จ',`ไฟล์: ${fname} (${DATA.length} รายการ)`,'📥');
+  showNotify('📥 ส่งออก CSV สำเร็จ',`ไฟล์: ${fname} (${DATA.length} รายการ)`);
 }
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.shiftKey&&e.key==='E'){e.preventDefault();showExportPin();}
