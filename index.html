@@ -869,8 +869,8 @@ function render(data){
   const months=sortMonths(Object.keys(st.bM));
   /* รีเซ็ต filter state ที่ไม่ valid กับชุดข้อมูลใหม่ */
   if(curMF!=='all'&&!months.includes(curMF))curMF='all';
-  if(curTypeMF!=='all'&&!months.includes(curTypeMF))curTypeMF='all';
-  if(curSrcMF!=='all'&&!months.includes(curSrcMF))curSrcMF='all';
+  if(curTypeMF!=='all'&&!Object.keys(st.bT).includes(curTypeMF))curTypeMF='all';
+  if(curSrcMF!=='all'&&!st.allS.some(([k])=>k===curSrcMF))curSrcMF='all';
 
   const _g=id=>document.getElementById(id);
   if(_g('kT'))_g('kT').textContent=st.total;
@@ -1502,7 +1502,13 @@ function closeModal(){
   workerModalEl.classList.remove('open');
   document.body.style.overflow='';
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const pin=document.getElementById('exportPinOverlay');
+    if(pin&&pin.classList.contains('open'))return;
+    closeModal();
+  }
+});
 
 /* ── GAS ── */
 function saveGasUrl(){
@@ -1747,7 +1753,7 @@ function verifyExportPin(){
 function exportCSV(){
   if(!DATA||!DATA.length){showNotify('⚠️ ไม่มีข้อมูล','ยังไม่มีข้อมูลให้ส่งออก');return;}
   const headers=['เดือน','ปี','สถานะ','ประเภทงาน','แหล่งที่มา','เรื่อง','ผู้ปฏิบัติงาน','อ้างอิง'];
-  const fieldMap={เดือน:'m',ปี:'y',สถานะ:'s',ประเภทงาน:'tp',แหล่งที่มา:'src',เรื่อง:'t',ผู้ปฏิบัติงาน:'w',อ้างอิง:'ref'};
+  const fieldMap={เดือน:'m',ปี:'y',สถานะ:'s',ประเภทงาน:'t',แหล่งที่มา:'src',เรื่อง:'sub',ผู้ปฏิบัติงาน:'w',อ้างอิง:'r'};
   const esc=v=>{const s=String(v??'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s;};
   const rows=[headers.join(','),...DATA.map(r=>headers.map(h=>esc(r[fieldMap[h]]||'')).join(','))];
   const bom='\uFEFF';
