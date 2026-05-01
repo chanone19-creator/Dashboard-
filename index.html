@@ -1161,11 +1161,11 @@ function _renderContinued(data,st){
     const years=[...new Set(data.map(r=>r.y||CURRENT_YEAR))].sort();
     if(years.length>1){
       const allYBtn=document.createElement('button');allYBtn.className='fbtn active';allYBtn.textContent='ทั้งหมด';
-      allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');filterTable();};
+      allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');saveFilterState();filterTable();};
       yfg.appendChild(allYBtn);
       years.forEach(y=>{
         const b=document.createElement('button');b.className='fbtn';b.textContent='ปี '+y;
-        b.onclick=function(){curYF=String(y);yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');filterTable();};
+        b.onclick=function(){curYF=String(y);yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');saveFilterState();filterTable();};
         yfg.appendChild(b);
       });
     } else {
@@ -1182,7 +1182,7 @@ function _renderContinued(data,st){
     mfg.innerHTML='';
     months.forEach(m=>{
       const btn=document.createElement('button');btn.className='fbtn'+(curMF===m?' active':'');btn.textContent=m;
-      btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');filterTable();};
+      btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');saveFilterState();filterTable();};
       mfg.appendChild(btn);
     });
   }
@@ -1437,27 +1437,27 @@ function buildWmFilters(){
   const types=[...new Set(wmRows.map(r=>r.t).filter(Boolean))].sort();
 
   /* year buttons */
-  const yg=document.getElementById('wmYearGrp');yg.innerHTML='';
+  const yg=document.getElementById('wmYearGrp');if(!yg)return;yg.innerHTML='';
   const allY=document.createElement('button');allY.className='wm-fbtn active';allY.textContent='ทั้งหมด';
   allY.onclick=function(){wmSetFilter('year','all',this);};yg.appendChild(allY);
   years.forEach(y=>{
     const b=document.createElement('button');b.className='wm-fbtn';b.textContent='ปี '+y;
     b.onclick=function(){wmSetFilter('year',String(y),this);};yg.appendChild(b);
   });
-  document.getElementById('wmYearFilterRow').style.display=years.length>1?'flex':'none';
+  const yrEl=document.getElementById('wmYearFilterRow');if(yrEl)yrEl.style.display=years.length>1?'flex':'none';
 
   /* month buttons */
-  const mg=document.getElementById('wmMonthGrp');mg.innerHTML='';
+  const mg=document.getElementById('wmMonthGrp');if(!mg)return;mg.innerHTML='';
   const allM=document.createElement('button');allM.className='wm-fbtn active';allM.textContent='ทั้งหมด';
   allM.onclick=function(){wmSetFilter('month','all',this);};mg.appendChild(allM);
   months.forEach(m=>{
     const b=document.createElement('button');b.className='wm-fbtn';b.textContent=m;
     b.onclick=function(){wmSetFilter('month',m,this);};mg.appendChild(b);
   });
-  document.getElementById('wmMonthFilterRow').style.display=months.length>1?'flex':'none';
+  const mrEl=document.getElementById('wmMonthFilterRow');if(mrEl)mrEl.style.display=months.length>1?'flex':'none';
 
   /* type buttons */
-  const tg=document.getElementById('wmTypeGrp');tg.innerHTML='';
+  const tg=document.getElementById('wmTypeGrp');if(!tg)return;tg.innerHTML='';
   const allT=document.createElement('button');allT.className='wm-fbtn active';allT.textContent='ทั้งหมด';
   allT.onclick=function(){wmSetFilter('type','all',this);};tg.appendChild(allT);
   types.forEach(t=>{
@@ -1517,7 +1517,7 @@ function saveGasUrl(){
     const _p=new URL(u);
     if(_p.protocol!=='https:'||_p.hostname!=='script.google.com'||!_p.pathname.includes('/macros/'))throw 0;
   }catch{alert('URL ไม่ถูกต้อง — ต้องเป็น https://script.google.com/macros/s/.../exec');return;}
-  gasUrl=u;localStorage.setItem('gasUrl',u);clearTimeout(_autoUpdateTimer);tryRefresh();
+  gasUrl=u;localStorage.setItem('gasUrl',u);clearTimeout(_autoUpdateTimer);_autoUpdateTimer=null;tryRefresh();scheduleAutoUpdate();
 }
 /* ── Retry with backoff ── */
 async function fetchWithRetry(url, retries=3, baseDelay=1000){
