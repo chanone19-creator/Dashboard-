@@ -919,7 +919,8 @@ function buildTypeChart(data){
   const sf=stats(filtered);
   const total=filtered.length;
   const typeH=Math.max(200, sf.topT.length*34+20);
-  document.querySelector('.type-hbar-wrap').style.height=typeH+'px';
+  const typeWrap=document.querySelector('.type-hbar-wrap');
+  if(typeWrap)typeWrap.style.height=typeH+'px';
 
   const typePctPlugin={id:'tp',afterDraw(chart){
     const{ctx}=chart;
@@ -979,7 +980,8 @@ function buildSrcChart(data){
   const allSrc=sf.allS;
   const total=filtered.length;
   const srcH=Math.max(220,allSrc.length*32+50);
-  document.querySelector('.src-wrap').style.height=srcH+'px';
+  const srcWrap=document.querySelector('.src-wrap');
+  if(srcWrap)srcWrap.style.height=srcH+'px';
   const srcPctPlugin={id:'sp',afterDraw(chart){
     const{ctx}=chart;
     chart.getDatasetMeta(0).data.forEach((bar,i)=>{
@@ -1576,7 +1578,7 @@ async function tryRefresh(){
     if(msg.includes('Load failed')||msg.includes('Failed to fetch')||msg.includes('NetworkError')){
       showRefreshError('❌ ไม่สามารถเชื่อมต่อ GAS ได้<br><br>สาเหตุที่เป็นไปได้:<br>1. GAS ยังไม่ได้ Deploy หรือ Deploy ผิดประเภท<br>2. สิทธิ์ไม่ได้ตั้งเป็น "Anyone"<br>3. URL ไม่ถูกต้อง<br><br>ให้ Re-deploy GAS ใหม่ตามขั้นตอนด้านบน');
     } else {
-      showRefreshError('❌ Error: '+msg);
+      showRefreshError('❌ Error: '+escHtml(msg));
     }
   }
   finally{if(btn)btn.classList.remove('spin');}
