@@ -1293,6 +1293,7 @@ function openWorkerModal(name,colorIdx,st){
     return wArr.some(w=>w===name);
   });
   wmRows=rows;wmFS={status:'all',year:'all',month:'all',type:'all'};
+  if(!rows.length){showNotify('⚠️ ไม่มีข้อมูล',`ไม่พบรายการงานของ ${name}`);return;}
   const done=rows.filter(r=>r.s===STATUS_DONE).length;
   const prog=rows.length-done;
   const totalW=st?st.topW.reduce((a,b)=>a+b[1],0):rows.length;
@@ -1466,7 +1467,7 @@ function buildWmFilters(){
     const b=document.createElement('button');b.className='wm-fbtn';b.textContent=t;
     b.onclick=function(){wmSetFilter('type',t,this);};tg.appendChild(b);
   });
-  document.getElementById('wmTypeFilterRow').style.display=types.length>1?'flex':'none';
+  const tfrEl=document.getElementById('wmTypeFilterRow');if(tfrEl)tfrEl.style.display=types.length>1?'flex':'none';
 }
 
 function renderWmItems(){
@@ -1501,7 +1502,7 @@ function renderWmItems(){
 function closeModal(){
   Object.values(wmCharts).forEach(c=>{try{c.destroy()}catch(e){}});
   wmCharts={};
-  workerModalEl.classList.remove('open');
+  if(workerModalEl)workerModalEl.classList.remove('open');
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',e=>{
@@ -1538,7 +1539,7 @@ async function fetchWithRetry(url, retries=3, baseDelay=1000){
 
 async function tryRefresh(){
   /* ไม่รีเฟรชขณะ worker modal เปิดอยู่ ป้องกัน render() ทับ chart */
-  if(workerModalEl.classList.contains('open'))return;
+  if(workerModalEl&&workerModalEl.classList.contains('open'))return;
   const btn=document.getElementById('rbtn');if(btn)btn.classList.add('spin');
   if(!gasUrl){const cn=document.getElementById('corsNotice');if(cn)cn.classList.add('show');if(btn)btn.classList.remove('spin');return;}
   const oldCount=DATA.length;
@@ -1639,7 +1640,7 @@ function toggleTheme(){
     ?'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
     :'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
   /* Re-render charts with appropriate colors (skip if modal is open to avoid chart conflicts) */
-  if(DATA.length&&!workerModalEl.classList.contains('open'))render(DATA);
+  if(DATA.length&&!(workerModalEl&&workerModalEl.classList.contains('open')))render(DATA);
 }
 (function(){
   const saved=localStorage.getItem('theme');
