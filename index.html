@@ -968,7 +968,7 @@ function buildTypeChart(data){
     legEl.appendChild(d);
   });
   /* Build month filter buttons for type — pass pre-computed months (no extra stats call) */
-  buildChartMonthFilter('typeMfGrp',curTypeMF,val=>{curTypeMF=val;buildTypeChart(DATA);},Object.keys(st.bM));
+  buildChartMonthFilter('typeMfGrp',curTypeMF,val=>{curTypeMF=val;buildTypeChart(DATA);},sortMonths(Object.keys(st.bM)));
 }
 
 /* ── Source chart (filterable) ── */
@@ -1010,7 +1010,7 @@ function buildSrcChart(data){
     plugins:[srcPctPlugin]
   });
   /* Build month filter buttons for src */
-  buildChartMonthFilter('srcMfGrp',curSrcMF,val=>{curSrcMF=val;buildSrcChart(DATA);},Object.keys(st.bM));
+  buildChartMonthFilter('srcMfGrp',curSrcMF,val=>{curSrcMF=val;buildSrcChart(DATA);},sortMonths(Object.keys(st.bM)));
   /* Src expand detail */
   const srcDEl=document.getElementById('srcDetail');if(srcDEl){
     const top5=allSrc.slice(0,5);
@@ -1058,7 +1058,7 @@ function _renderContinued(data,st){
     d.innerHTML=`<div style="display:flex;align-items:center;gap:7px;width:145px;flex-shrink:0">
         ${wphoto
           ?`<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${col};box-shadow:0 0 8px ${col}55">
-              <img src="${wphoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}">
+              <img src="${escHtml(wphoto)}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%" alt="${escHtml(name)}" onerror="this.parentElement.style.display='none'">
             </div>`
           :`<div style="width:34px;height:34px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:${col}">${escHtml(name.charAt(0))}</div>`
         }
@@ -1142,7 +1142,7 @@ function _renderContinued(data,st){
       const tb=typeBreakdown(rows);const total=rows.length||1;
       const items=tb.slice(0,5).map(([t,n])=>`
         <div class="stat-detail-row">
-          <span class="stat-detail-type" title="${t}">${t}</span>
+          <span class="stat-detail-type" title="${escHtml(t)}">${escHtml(t)}</span>
           <span class="stat-detail-n" style="color:${color}">${n}</span>
         </div>
         <div class="stat-pbar-wrap"><div class="stat-pbar-fill" style="width:${(n/total*100).toFixed(0)}%;background:${color}88"></div></div>
@@ -1285,6 +1285,9 @@ function filterTable(){
 }
 function setSF(f,btn){curSF=f;saveFilterState();document.querySelectorAll('#sfGrp .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterTable();}
 
+/* ── Worker modal filter state (declared here, before openWorkerModal uses it) ── */
+let wmFS={status:'all',year:'all',month:'all',type:'all'};
+
 /* ── Worker Modal ── */
 function openWorkerModal(name,colorIdx,st){
   /* filter rows where this worker is listed — use wa array for exact match */
@@ -1308,22 +1311,25 @@ function openWorkerModal(name,colorIdx,st){
   if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%COLORS.length]},${COLORS[(ci+2)%COLORS.length]})`;
 
   /* ── Circle avatar: pre-cropped square → perfect circle ── */
-  if(wmPhoto&&/^https?:\/\/.+/.test(wmPhoto)){
-    const img=document.createElement('img');
-    img.src=wmPhoto;img.alt=name;
-    img.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block';
-    wmAvatarEl.innerHTML='';wmAvatarEl.appendChild(img);
-    wmAvatarEl.style.background='none';
-    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
-    wmAvatarEl.style.overflow='hidden';
-    wmAvatarEl.textContent='';
-  } else {
-    wmAvatarEl.innerHTML='';
-    wmAvatarEl.textContent=AVATARS[ci%AVATARS.length];
-    wmAvatarEl.style.background=COLORS[ci%COLORS.length]+'22';
-    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
+  if(wmAvatarEl){
+    if(wmPhoto&&/^https?:\/\/.+/.test(wmPhoto)){
+      const img=document.createElement('img');
+      img.src=wmPhoto;img.alt=name;
+      img.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block';
+      img.onerror=function(){wmAvatarEl.innerHTML='';wmAvatarEl.textContent=AVATARS[ci%AVATARS.length];wmAvatarEl.style.background=COLORS[ci%COLORS.length]+'22';};
+      wmAvatarEl.innerHTML='';wmAvatarEl.appendChild(img);
+      wmAvatarEl.style.background='none';
+      wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+      wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
+      wmAvatarEl.style.overflow='hidden';
+      wmAvatarEl.textContent='';
+    } else {
+      wmAvatarEl.innerHTML='';
+      wmAvatarEl.textContent=AVATARS[ci%AVATARS.length];
+      wmAvatarEl.style.background=COLORS[ci%COLORS.length]+'22';
+      wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+      wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
+    }
   }
   document.getElementById('wmName').textContent=name;
   document.getElementById('wmSub').textContent=`ผู้ปฏิบัติงาน · ${rows.length} งาน`;
@@ -1350,7 +1356,7 @@ function openWorkerModal(name,colorIdx,st){
     const c=COLORS[i%COLORS.length];
     tlHtml+=`<div class="wm-type-row">
       <div class="wm-type-dot" style="background:${c}"></div>
-      <div class="wm-type-name" title="${n}">${n}</div>
+      <div class="wm-type-name" title="${escHtml(n)}">${escHtml(n)}</div>
       <div class="wm-type-bar-wrap"><div class="wm-type-bar" style="width:${(cnt/maxT*100).toFixed(0)}%;background:${c}"></div></div>
       <div class="wm-type-pct" style="color:${c}">${pct}%</div>
       <div class="wm-type-cnt">${cnt}</div>
@@ -1359,7 +1365,7 @@ function openWorkerModal(name,colorIdx,st){
   tl.innerHTML=tlHtml;
 
   /* Month data prep */
-  const wMonths=[...new Set(rows.map(r=>r.m))];
+  const wMonths=sortMonths([...new Set(rows.map(r=>r.m).filter(Boolean))]);
   const wDM={},wPM={};
   rows.forEach(r=>{if(r.s===STATUS_DONE)wDM[r.m]=(wDM[r.m]||0)+1;else wPM[r.m]=(wPM[r.m]||0)+1;});
   const wmMonthTotal=rows.length||1;
@@ -1417,9 +1423,6 @@ function openWorkerModal(name,colorIdx,st){
     });
   }));
 }
-
-/* ── Worker modal filter state ── */
-let wmFS={status:'all',year:'all',month:'all',type:'all'};
 
 function wmSetFilter(dim,val,btn){
   wmFS[dim]=val;
@@ -1570,7 +1573,7 @@ async function tryRefresh(){
       const diff=mapped.length-oldCount;
       showNotify('🆕 มีงานใหม่ '+diff+' รายการ','จากเดิม '+oldCount+' เป็น '+mapped.length+' รายการ (อัพเดท '+thaiDateNow()+')');
     } else if(oldCount>0 && mapped.length===oldCount){
-      showNotify('✅ ข้อมูลล่าสุดแล้ว','ไม่มีรายการใหม่ ('+mapped.length+' รายการ)');
+      showNotify('✅ อัพเดทข้อมูลแล้ว','รวม '+mapped.length+' รายการ ('+thaiDateNow()+')');
     }
     const ftEl=document.getElementById('footer');if(ftEl)ftEl.textContent=`Dashboard รวมสรุปงาน ปี ${CURRENT_YEAR} · Live · `+new Date().toLocaleTimeString('th-TH');
   }catch(e){
@@ -1656,7 +1659,7 @@ function printDashboard(){
   const panels=document.querySelectorAll('.expand-panel');
   _printPanelState=Array.from(panels).map(p=>p.classList.contains('open'));
   panels.forEach(p=>p.classList.add('open'));
-  window.print();
+  setTimeout(()=>window.print(),500);
 }
 window.addEventListener('afterprint',()=>{
   const panels=document.querySelectorAll('.expand-panel');
