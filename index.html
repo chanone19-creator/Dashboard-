@@ -535,9 +535,9 @@ function doGet(e) {
             <input type="text" id="sInput" placeholder="ค้นหาเรื่อง / ต้นทาง..." oninput="filterTableDebounced()">
           </div>
           <div class="fgrp" id="sfGrp">
-            <button class="fbtn active" onclick="setSF('all',this)">ทั้งหมด</button>
-            <button class="fbtn" onclick="setSF('done',this)">เสร็จแล้ว</button>
-            <button class="fbtn" onclick="setSF('inprog',this)">กำลังดำเนิน</button>
+            <button class="fbtn active" data-sf="all" onclick="setSF('all',this)">ทั้งหมด</button>
+            <button class="fbtn" data-sf="done" onclick="setSF('done',this)">เสร็จแล้ว</button>
+            <button class="fbtn" data-sf="inprog" onclick="setSF('inprog',this)">กำลังดำเนิน</button>
           </div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -1162,11 +1162,11 @@ function _renderContinued(data,st){
     yfg.innerHTML='';
     const years=[...new Set(data.map(r=>r.y||CURRENT_YEAR))].sort();
     if(years.length>1){
-      const allYBtn=document.createElement('button');allYBtn.className='fbtn active';allYBtn.textContent='ทั้งหมด';
+      const allYBtn=document.createElement('button');allYBtn.className='fbtn'+(curYF==='all'?' active':'');allYBtn.textContent='ทั้งหมด';
       allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');saveFilterState();filterTable();};
       yfg.appendChild(allYBtn);
       years.forEach(y=>{
-        const b=document.createElement('button');b.className='fbtn';b.textContent='ปี '+y;
+        const b=document.createElement('button');b.className='fbtn'+(curYF===String(y)?' active':'');b.textContent='ปี '+y;
         b.onclick=function(){curYF=String(y);yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');saveFilterState();filterTable();};
         yfg.appendChild(b);
       });
@@ -1691,6 +1691,8 @@ function restoreFilterState(){
   }catch(e){}
 }
 restoreFilterState();
+/* sync status button active class to match restored curSF */
+document.querySelectorAll('#sfGrp .fbtn[data-sf]').forEach(b=>b.classList.toggle('active',b.dataset.sf===curSF));
 
 /* ── Init ── */
 const saved=localStorage.getItem('gasUrl');
