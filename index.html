@@ -3,28 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard รวมสรุปงาน ปี 2569</title>
+<title>Dashboard รวมสรุปงาน ปี 2569 — สำนักงาน กสทช. เขต 16</title>
+<meta name="description" content="Dashboard รวมสรุปงานการปฏิบัติงาน สำนักงาน กสทช. เขต 16 ประจำปี พ.ศ. 2569 แสดงสถิติงาน สถานะ และภาระงานของเจ้าหน้าที่">
+<meta property="og:title" content="Dashboard รวมสรุปงาน ปี 2569 — สำนักงาน กสทช. เขต 16">
+<meta property="og:description" content="Dashboard แสดงสถิติงาน สถานะ และภาระงานของเจ้าหน้าที่ สำนักงาน กสทช. เขต 16 ประจำปี พ.ศ. 2569">
+<meta property="og:type" content="website">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" onerror="loadChartFallback1()"></script>
 <script>
-if(typeof Chart==='undefined'){
-  document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/scr'+'ipt>');
+function loadChartFallback1(){
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+  s.onerror=loadChartFallback2;
+  document.head.appendChild(s);
 }
-</script>
-<script>
-if(typeof Chart==='undefined'){
-  document.write('<scr'+'ipt src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js"><\/scr'+'ipt>');
-}
-</script>
-<script>
-if(typeof Chart==='undefined'){
-  document.addEventListener('DOMContentLoaded',()=>{
-    document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;color:#ff4466"><h2>⚠️ ไม่สามารถโหลด Chart.js ได้</h2><p>กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต แล้วรีเฟรชหน้านี้</p><button onclick="location.reload()" style="padding:10px 24px;border-radius:8px;border:none;background:#00d4ff;color:#000;font-weight:bold;cursor:pointer;margin-top:16px">รีเฟรช</button></div>';
-  });
+function loadChartFallback2(){
+  var s=document.createElement('script');
+  s.src='https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
+  s.onerror=function(){
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;color:#ff4466"><h2>⚠️ ไม่สามารถโหลด Chart.js ได้</h2><p>กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต แล้วรีเฟรชหน้านี้</p><button onclick="location.reload()" style="padding:10px 24px;border-radius:8px;border:none;background:#00d4ff;color:#000;font-weight:bold;cursor:pointer;margin-top:16px">รีเฟรช</button></div>';
+    });
+  };
+  document.head.appendChild(s);
 }
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<noscript><div style="padding:40px;text-align:center;font-family:sans-serif;background:#0a0f1e;color:#e8f0fe;min-height:100vh;display:flex;align-items:center;justify-content:center"><div><h2 style="color:#ff4466;margin-bottom:12px">⚠️ กรุณาเปิดใช้งาน JavaScript</h2><p style="color:#8ea3c3">Dashboard นี้ต้องการ JavaScript เพื่อแสดงผล กรุณาเปิดใช้งาน JavaScript ในเบราว์เซอร์ของท่าน</p></div></div></noscript>
 
 <style>
 :root{--bg:#0a0f1e;--bg2:#0f1629;--card:#141b2d;--card2:#1a2340;--border:#1e2d4a;--accent1:#00d4ff;--accent2:#7b4fff;--accent3:#00ff88;--text:#e8f0fe;--text2:#8ea3c3;--done:#00c97a;--inprog:#ff9f43}
@@ -184,7 +190,7 @@ tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
 .wmodal{max-width:1100px;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden}
 
 /* Modal Header */
-.wm-head{position:relative;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;overflow:hidden}
+.wm-head{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;overflow:clip}
 .wm-head-accent{position:absolute;top:0;left:0;right:0;height:3px;z-index:3}
 .wm-head-inner{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;position:relative;z-index:2}
 .wm-head-left{display:flex;align-items:center;gap:18px}
@@ -331,26 +337,26 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 <div class="wrap">
   <header>
     <div class="header-left">
-      <h1>📡 Dashboard รวมสรุปงาน</h1>
+      <h1><span aria-hidden="true">📡 </span>Dashboard รวมสรุปงาน</h1>
       <p id="hSub">ข้อมูลการปฏิบัติงาน ปี พ.ศ. 2569</p>
     </div>
     <div class="header-right">
       <div class="toolbar-btns">
-        <button class="tool-btn" id="themeBtn" onclick="toggleTheme()" title="สลับธีม Light/Dark">
+        <button class="tool-btn" id="themeBtn" onclick="toggleTheme()" title="สลับธีม Light/Dark" aria-label="สลับธีม Light/Dark">
           <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           <span id="themeLbl">Light</span>
         </button>
-        <button class="tool-btn" onclick="exportCSV()" title="ส่งออก CSV">
+        <button class="tool-btn" onclick="exportCSV()" title="ส่งออก CSV" aria-label="ส่งออกข้อมูล CSV">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>CSV</span>
         </button>
-        <button class="tool-btn" onclick="printDashboard()" title="พิมพ์ Dashboard">
+        <button class="tool-btn" onclick="printDashboard()" title="พิมพ์ Dashboard" aria-label="พิมพ์ Dashboard">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           <span>พิมพ์</span>
         </button>
       </div>
       <div>
-        <button class="rbtn" id="rbtn" onclick="tryRefresh()">
+        <button class="rbtn" id="rbtn" onclick="tryRefresh()" aria-label="รีเฟรชข้อมูล">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           รีเฟรช
         </button>
@@ -513,7 +519,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
 </div>
 
 <!-- Notification Toast -->
-<div class="notify-toast" id="notifyToast"><button class="nt-close" onclick="hideNotify()">✕</button><div class="nt-title" id="ntTitle"></div><div class="nt-body" id="ntBody"></div></div>
+<div class="notify-toast" id="notifyToast"><button class="nt-close" onclick="hideNotify()" aria-label="ปิดการแจ้งเตือน">✕</button><div class="nt-title" id="ntTitle"></div><div class="nt-body" id="ntBody"></div></div>
 
 <!-- Worker Dashboard Modal -->
 
@@ -532,7 +538,7 @@ body.light .wmodal-overlay{background:rgba(255,255,255,.92)}
             <div class="wm-sub" id="wmSub">—</div>
           </div>
         </div>
-        <button class="wm-close" onclick="closeModal()">✕</button>
+        <button class="wm-close" onclick="closeModal()" aria-label="ปิด">✕</button>
       </div>
     </div>
     <div class="wm-body">
