@@ -29,7 +29,7 @@ function loadChartFallback2(){
 }
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <noscript><div style="padding:40px;text-align:center;font-family:sans-serif;background:#0a0f1e;color:#e8f0fe;min-height:100vh;display:flex;align-items:center;justify-content:center"><div><h2 style="color:#ff4466;margin-bottom:12px">⚠️ กรุณาเปิดใช้งาน JavaScript</h2><p style="color:#8ea3c3">Dashboard นี้ต้องการ JavaScript เพื่อแสดงผล กรุณาเปิดใช้งาน JavaScript ในเบราว์เซอร์ของท่าน</p></div></div></noscript>
 
 <style>
@@ -680,7 +680,7 @@ const WORKER_PHOTOS={
 };
 const COLORS=['#00d4ff','#7b4fff','#00ff88','#ff6b35','#ffd700','#ff4466','#00e5cc','#a855f7','#fb923c','#34d399'];
 const AVATARS=['🔵','🟣','🟢','🟠','🟡','🔴','🩵','🫧'];
-let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],wmFilter_='all',curTypeMF='all',curSrcMF='all';
+let DATA=[],charts={},wmCharts={},gasUrl='',curSF='all',curMF='all',curYF='all',monthMode='count',wmRows=[],curTypeMF='all',curSrcMF='all';
 
 /* ── CSV helpers ── */
 function parseCSV(text){
@@ -820,7 +820,8 @@ function render(data){
   document.getElementById('kDbar').style.width=dp+'%';
   document.getElementById('kPbar').style.width=pp+'%';
   document.getElementById('hbadge').textContent=`ข้อมูล ${gasUrl?'Live':'Embedded'} · ${st.total} รายการ`;
-  document.getElementById('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. 2569 · ${months.join(' – ')}`;
+  const dataYears=[...new Set(data.map(r=>r.y||'2569'))].sort().join(', ');
+  document.getElementById('hSub').textContent=`ข้อมูลการปฏิบัติงาน ปี พ.ศ. ${dataYears} · ${months.join(' – ')}`;
 
   Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};
 
@@ -1091,12 +1092,12 @@ function _renderContinued(data,st){
     yfg.innerHTML='';
     const years=[...new Set(data.map(r=>r.y||'2569'))].sort();
     if(years.length>1){
-      const allYBtn=document.createElement('button');allYBtn.className='fbtn active';allYBtn.textContent='ทั้งหมด';
-      allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');filterTable();};
+      const allYBtn=document.createElement('button');allYBtn.className='fbtn'+(curYF==='all'?' active':'');allYBtn.textContent='ทั้งหมด';
+      allYBtn.onclick=function(){curYF='all';yfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));allYBtn.classList.add('active');saveFilterState();filterTable();};
       yfg.appendChild(allYBtn);
       years.forEach(y=>{
-        const b=document.createElement('button');b.className='fbtn';b.textContent='ปี '+y;
-        b.onclick=function(){curYF=y;yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');filterTable();};
+        const b=document.createElement('button');b.className='fbtn'+(curYF===y?' active':'');b.textContent='ปี '+y;
+        b.onclick=function(){curYF=y;yfg.querySelectorAll('.fbtn').forEach(b2=>b2.classList.remove('active'));b.classList.add('active');saveFilterState();filterTable();};
         yfg.appendChild(b);
       });
     } else {
@@ -1110,8 +1111,8 @@ function _renderContinued(data,st){
   /* Month filters */
   const mfg=document.getElementById('mfGrp');mfg.innerHTML='';
   months.forEach(m=>{
-    const btn=document.createElement('button');btn.className='fbtn';btn.textContent=m;
-    btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');filterTable();};
+    const btn=document.createElement('button');btn.className='fbtn'+(curMF===m?' active':'');btn.textContent=m;
+    btn.onclick=function(){curMF=(curMF===m)?'all':m;mfg.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));if(curMF!=='all')btn.classList.add('active');saveFilterState();filterTable();};
     mfg.appendChild(btn);
   });
   filterTable();
@@ -1192,7 +1193,7 @@ function setMonthMode(mode,btn){
 /* ── Filter Table ── */
 function filterTable(){
   const sq=document.getElementById('sInput').value.toLowerCase();
-  const tb=document.getElementById('tBody');tb.innerHTML='';let vis=0;
+  const tb=document.getElementById('tBody');let vis=0;const html=[];
   DATA.forEach(row=>{
     if(curSF==='done'&&row.s!=='ดำเนินการแล้วเสร็จ')return;
     if(curSF==='inprog'&&row.s!=='ระหว่างดำเนินการ')return;
@@ -1203,8 +1204,9 @@ function filterTable(){
     vis++;
     const badge=row.s==='ดำเนินการแล้วเสร็จ'?`<span class="badge bdone"><span class="bdot"></span>เสร็จแล้ว</span>`:`<span class="badge bprog"><span class="bdot"></span>กำลังดำเนิน</span>`;
     const ref=(row.r&&row.r.startsWith('http'))?`<a href="${row.r}" target="_blank" class="rlink">🔗</a>`:'—';
-    tb.innerHTML+=`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${row.m}</td><td>${badge}</td><td><span class="ttag">${row.t||'—'}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.src}">${row.src}</td><td class="tsubj" title="${row.sub}">${row.sub}</td><td style="font-size:12px;color:var(--text2)">${row.w||'—'}</td><td>${ref}</td></tr>`;
+    html.push(`<tr><td style="color:var(--text2);font-size:12px">${vis}</td><td style="font-size:12px;color:var(--text2);white-space:nowrap">${row.m}</td><td>${badge}</td><td><span class="ttag">${row.t||'—'}</span></td><td style="font-size:12px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.src}">${row.src}</td><td class="tsubj" title="${row.sub}">${row.sub}</td><td style="font-size:12px;color:var(--text2)">${row.w||'—'}</td><td>${ref}</td></tr>`);
   });
+  tb.innerHTML=html.join('');
   document.getElementById('rcnt').textContent=vis;
 }
 function setSF(f,btn){curSF=f;saveFilterState();document.querySelectorAll('#sfGrp .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterTable();}
@@ -1216,7 +1218,7 @@ function openWorkerModal(name,colorIdx,st){
     const wArr=r.wa||(r.w?r.w.split(',').map(x=>x.trim()).filter(Boolean):[]);
     return wArr.some(w=>w===name);
   });
-  wmRows=rows;wmFilter_='all';wmFS={status:'all',year:'all',month:'all',type:'all'};
+  wmRows=rows;wmFS={status:'all',year:'all',month:'all',type:'all'};
   const done=rows.filter(r=>r.s==='ดำเนินการแล้วเสร็จ').length;
   const prog=rows.length-done;
   const totalW=st?st.topW.reduce((a,b)=>a+b[1],0):rows.length;
@@ -1228,22 +1230,22 @@ function openWorkerModal(name,colorIdx,st){
   const wmAccent=document.getElementById('wmHeadAccent');
 
   /* ── Accent color bar on top of header ── */
-  if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%10]},${COLORS[(ci+2)%10]})`;
+  if(wmAccent) wmAccent.style.background=`linear-gradient(90deg,${COLORS[ci%COLORS.length]},${COLORS[(ci+2)%COLORS.length]})`;
 
   /* ── Circle avatar: pre-cropped square → perfect circle ── */
   if(wmPhoto){
     wmAvatarEl.innerHTML=`<img src="${wmPhoto}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block" alt="${name}">`;
     wmAvatarEl.style.background='none';
-    wmAvatarEl.style.color=COLORS[ci%10];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%10]},0 6px 24px #0008`;
+    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
     wmAvatarEl.style.overflow='hidden';
     wmAvatarEl.textContent='';
   } else {
     wmAvatarEl.innerHTML='';
     wmAvatarEl.textContent=AVATARS[ci%AVATARS.length];
-    wmAvatarEl.style.background=COLORS[ci%10]+'22';
-    wmAvatarEl.style.color=COLORS[ci%10];
-    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%10]},0 6px 24px #0008`;
+    wmAvatarEl.style.background=COLORS[ci%COLORS.length]+'22';
+    wmAvatarEl.style.color=COLORS[ci%COLORS.length];
+    wmAvatarEl.style.boxShadow=`0 0 0 3px var(--bg2),0 0 0 5px ${COLORS[ci%COLORS.length]},0 6px 24px #0008`;
   }
   document.getElementById('wmName').textContent=name;
   document.getElementById('wmSub').textContent=`ผู้ปฏิบัติงาน · ${rows.length} งาน`;
@@ -1584,8 +1586,12 @@ function exportCSV(){
 
 /* ── Print ── */
 function printDashboard(){
-  /* Expand all collapsed panels before print */
-  document.querySelectorAll('.expand-panel').forEach(p=>p.classList.add('open'));
+  const closedPanels=[];
+  document.querySelectorAll('.expand-panel').forEach(p=>{
+    if(!p.classList.contains('open')){closedPanels.push(p);p.classList.add('open');}
+  });
+  const restore=()=>{closedPanels.forEach(p=>p.classList.remove('open'));window.removeEventListener('afterprint',restore);};
+  window.addEventListener('afterprint',restore);
   window.print();
 }
 
@@ -1610,6 +1616,8 @@ function restoreFilterState(){
   }catch(e){}
 }
 restoreFilterState();
+/* Sync sfGrp button active state with restored curSF */
+{const sfMap={all:0,done:1,inprog:2};const sfBtns=document.querySelectorAll('#sfGrp .fbtn');sfBtns.forEach(b=>b.classList.remove('active'));if(sfBtns[sfMap[curSF]])sfBtns[sfMap[curSF]].classList.add('active');}
 
 /* ── Init ── */
 const saved=localStorage.getItem('gasUrl');
