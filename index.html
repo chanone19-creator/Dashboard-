@@ -1431,7 +1431,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 /* ── GAS ── */
 function saveGasUrl(){
   const u=document.getElementById('gasUrl').value.trim();
-  if(!u.startsWith('https://script.google.com')){alert('URL ไม่ถูกต้อง');return;}
+  if(!u.startsWith('https://script.google.com')){alert('URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://script.google.com');return;}
+  if(!u.includes('/macros/s/') || !u.endsWith('/exec')){alert('URL ไม่สมบูรณ์ ต้องอยู่ในรูป .../macros/s/XXXX/exec');return;}
   gasUrl=u;localStorage.setItem('gasUrl',u);tryRefresh();
 }
 /* ── Retry with backoff ── */
@@ -1622,8 +1623,22 @@ restoreFilterState();
 /* ── Init ── */
 const saved=localStorage.getItem('gasUrl');
 if(saved){gasUrl=saved;document.getElementById('gasUrl').value=saved;}
-render(EMBEDDED);
-updateLupdNow(); // แสดงวันที่ปัจจุบันทันที
+
+/* ── เริ่ม render ด้วย EMBEDDED ก่อน แล้วค่อย refresh จาก GAS ถ้ามี URL ── */
+function bootRender(){
+  if(typeof Chart === 'undefined'){
+    // รอ Chart.js โหลดเสร็จ (fallback chain) ก่อนค่อย render
+    setTimeout(bootRender, 200);
+    return;
+  }
+  render(EMBEDDED);
+  updateLupdNow();
+  // ถ้ามี gasUrl เก็บไว้ ให้ดึงข้อมูลสดมาแทนทันที (ไม่ต้องรอกดปุ่ม)
+  if(gasUrl){
+    setTimeout(()=>{ try{ tryRefresh(); }catch(e){ console.warn('Auto-refresh failed:',e); } }, 300);
+  }
+}
+bootRender();
 
 /* ── Auto-update วันละ 1 ครั้ง เวลา 06:00 น. ── */
 function scheduleAutoUpdate(){
